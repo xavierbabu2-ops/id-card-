@@ -262,8 +262,8 @@ fun ProfessionalMemberIdCardLayout(
                                     photoUri = card.photoUri,
                                     avatarPreset = 0,
                                     modifier = Modifier
-                                        .width(62.dp)
-                                        .height(72.dp),
+                                        .width(58.dp)
+                                        .height(68.dp),
                                     borderColor = Color.Black,
                                     borderWidth = 1.2.dp,
                                     shape = RoundedCornerShape(1.dp)
@@ -458,27 +458,23 @@ private fun FrontDetailRow(
         modifier = Modifier.fillMaxWidth()
     ) {
         Text(
-            text = label,
+            text = "$label :",
             color = OFFICIAL_LABEL_RED,
             fontWeight = FontWeight.Black,
-            fontSize = 10.5.sp,
-            modifier = Modifier.width(92.dp)
+            fontSize = 9.6.sp,
+            maxLines = 1,
+            softWrap = false
         )
-        Text(
-            text = ": ",
-            color = OFFICIAL_LABEL_RED,
-            fontWeight = FontWeight.Black,
-            fontSize = 10.5.sp,
-            modifier = Modifier.padding(horizontal = 1.dp)
-        )
+        Spacer(modifier = Modifier.width(3.dp))
         Text(
             text = value,
             color = Color(0xFF0F172A),
             fontWeight = FontWeight.Black,
-            fontSize = 10.8.sp,
-            lineHeight = 12.sp,
+            fontSize = 9.8.sp,
             maxLines = 1,
-            overflow = TextOverflow.Ellipsis
+            softWrap = false,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f, fill = false)
         )
     }
 }
@@ -494,26 +490,23 @@ private fun BackDetailRow(
         modifier = Modifier.fillMaxWidth()
     ) {
         Text(
-            text = label,
+            text = "$label :",
             color = OFFICIAL_LABEL_RED,
             fontWeight = FontWeight.Black,
-            fontSize = 10.sp,
-            modifier = Modifier.width(80.dp)
+            fontSize = 9.5.sp,
+            maxLines = 1,
+            softWrap = false
         )
-        Text(
-            text = ": ",
-            color = OFFICIAL_LABEL_RED,
-            fontWeight = FontWeight.Black,
-            fontSize = 10.sp
-        )
+        Spacer(modifier = Modifier.width(3.dp))
         Text(
             text = value,
             color = Color(0xFF111827),
             fontWeight = FontWeight.ExtraBold,
-            fontSize = 10.2.sp,
-            lineHeight = 12.sp,
+            fontSize = 9.6.sp,
+            lineHeight = 11.5.sp,
             maxLines = if (isAddress) 2 else 1,
-            overflow = TextOverflow.Ellipsis
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f, fill = false)
         )
     }
 }
@@ -525,22 +518,23 @@ private fun SignatureBlock(
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.width(78.dp)
+        modifier = Modifier.width(74.dp)
     ) {
         Text(
             text = title,
-            fontSize = 6.6.sp,
+            fontSize = 6.2.sp,
             fontWeight = FontWeight.Black,
             color = Color(0xFF7F1D1D),
             textAlign = TextAlign.Center,
-            maxLines = 1
+            maxLines = 1,
+            softWrap = false
         )
         Image(
             painter = painterResource(id = signatureRes),
             contentDescription = title,
             modifier = Modifier
-                .height(13.dp)
-                .width(52.dp)
+                .height(12.dp)
+                .width(48.dp)
         )
     }
 }
