@@ -82,7 +82,7 @@ fun ProfessionalMemberIdCardLayout(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .fillMaxHeight(0.26f)
+                    .fillMaxHeight(0.24f)
                     .background(OFFICIAL_CARD_RED)
                     .padding(horizontal = 6.dp, vertical = 2.dp)
             ) {
@@ -94,7 +94,7 @@ fun ProfessionalMemberIdCardLayout(
                     // Left Official TNPA² Round Logo
                     Box(
                         modifier = Modifier
-                            .size(46.dp)
+                            .size(44.dp)
                             .clip(CircleShape)
                             .background(Color.White)
                             .padding(1.dp)
@@ -129,7 +129,7 @@ fun ProfessionalMemberIdCardLayout(
                         Text(
                             text = "தமிழ்நாடு பெயிண்டர்கள் மற்றும் ஓவியர்கள்",
                             color = Color.White,
-                            fontSize = 10.8.sp,
+                            fontSize = 10.5.sp,
                             fontWeight = FontWeight.Black,
                             textAlign = TextAlign.Center,
                             lineHeight = 12.sp,
@@ -138,7 +138,7 @@ fun ProfessionalMemberIdCardLayout(
                         Text(
                             text = "முன்னேற்ற சங்கம்",
                             color = Color.White,
-                            fontSize = 11.8.sp,
+                            fontSize = 11.5.sp,
                             fontWeight = FontWeight.Black,
                             textAlign = TextAlign.Center,
                             lineHeight = 13.sp,
@@ -148,7 +148,7 @@ fun ProfessionalMemberIdCardLayout(
                         Text(
                             text = "அரசு பதிவு எண்  TNMDUJCLMDUTU-50-26-00044",
                             color = Color.White,
-                            fontSize = 7.2.sp,
+                            fontSize = 7.sp,
                             fontWeight = FontWeight.ExtraBold,
                             textAlign = TextAlign.Center,
                             maxLines = 1
@@ -156,7 +156,7 @@ fun ProfessionalMemberIdCardLayout(
                         Text(
                             text = "1/14 அம்பலக்காரன் பட்டி உத்தங்குடி மதுரை 625107",
                             color = Color.White,
-                            fontSize = 7.2.sp,
+                            fontSize = 7.sp,
                             fontWeight = FontWeight.Bold,
                             textAlign = TextAlign.Center,
                             maxLines = 1
@@ -166,7 +166,7 @@ fun ProfessionalMemberIdCardLayout(
                     // Right Official TNPA² Round Logo
                     Box(
                         modifier = Modifier
-                            .size(46.dp)
+                            .size(44.dp)
                             .clip(CircleShape)
                             .background(Color.White)
                             .padding(1.dp)
@@ -206,9 +206,9 @@ fun ProfessionalMemberIdCardLayout(
                     painter = painterResource(id = R.drawable.ic_association_logo),
                     contentDescription = null,
                     modifier = Modifier
-                        .size(125.dp)
+                        .size(110.dp)
                         .align(Alignment.Center)
-                        .alpha(0.09f)
+                        .alpha(0.08f)
                 )
 
                 if (!isBackSide) {
@@ -218,7 +218,8 @@ fun ProfessionalMemberIdCardLayout(
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(start = 10.dp, end = 10.dp, top = 6.dp, bottom = 2.dp)
+                            .padding(start = 8.dp, end = 8.dp, top = 4.dp, bottom = 2.dp),
+                        verticalArrangement = Arrangement.SpaceBetween
                     ) {
                         Row(
                             modifier = Modifier
@@ -227,15 +228,15 @@ fun ProfessionalMemberIdCardLayout(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            // Left 3 Details in Bold Red
+                            // Left 3 Details in Bold Red (Never overlapped or hidden)
                             Column(
                                 modifier = Modifier
                                     .weight(1f)
-                                    .padding(end = 6.dp)
+                                    .padding(end = 4.dp)
                                     .then(
                                         if (onNameOrAddressClick != null) Modifier.clickable { onNameOrAddressClick() } else Modifier
                                     ),
-                                verticalArrangement = Arrangement.spacedBy(6.dp)
+                                verticalArrangement = Arrangement.spacedBy(4.5.dp)
                             ) {
                                 FrontDetailRow(
                                     label = "உறுப்பினர் எண்",
@@ -254,17 +255,17 @@ fun ProfessionalMemberIdCardLayout(
                             // Right Rectangular Passport Photo Frame
                             Box(
                                 modifier = Modifier
-                                    .padding(start = 4.dp)
+                                    .padding(start = 2.dp)
                                     .then(if (onPhotoClick != null) Modifier.clickable { onPhotoClick() } else Modifier)
                             ) {
                                 CardPhotoFrame(
                                     photoUri = card.photoUri,
                                     avatarPreset = 0,
                                     modifier = Modifier
-                                        .width(70.dp)
-                                        .height(84.dp),
+                                        .width(62.dp)
+                                        .height(72.dp),
                                     borderColor = Color.Black,
-                                    borderWidth = 1.4.dp,
+                                    borderWidth = 1.2.dp,
                                     shape = RoundedCornerShape(1.dp)
                                 )
                             }
@@ -274,7 +275,7 @@ fun ProfessionalMemberIdCardLayout(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(top = 2.dp, bottom = 1.dp),
+                                .padding(top = 1.dp, bottom = 1.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
@@ -418,7 +419,7 @@ fun ProfessionalMemberIdCardLayout(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .fillMaxHeight(0.12f)
+                    .fillMaxHeight(0.10f)
                     .background(OFFICIAL_CARD_RED)
                     .padding(horizontal = 12.dp, vertical = 1.dp)
             ) {
@@ -460,23 +461,23 @@ private fun FrontDetailRow(
             text = label,
             color = OFFICIAL_LABEL_RED,
             fontWeight = FontWeight.Black,
-            fontSize = 11.sp,
-            modifier = Modifier.width(98.dp)
+            fontSize = 10.5.sp,
+            modifier = Modifier.width(92.dp)
         )
         Text(
             text = ": ",
             color = OFFICIAL_LABEL_RED,
             fontWeight = FontWeight.Black,
-            fontSize = 11.sp,
+            fontSize = 10.5.sp,
             modifier = Modifier.padding(horizontal = 1.dp)
         )
         Text(
             text = value,
             color = Color(0xFF0F172A),
             fontWeight = FontWeight.Black,
-            fontSize = 11.2.sp,
-            lineHeight = 13.sp,
-            maxLines = 2,
+            fontSize = 10.8.sp,
+            lineHeight = 12.sp,
+            maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
     }
@@ -496,23 +497,23 @@ private fun BackDetailRow(
             text = label,
             color = OFFICIAL_LABEL_RED,
             fontWeight = FontWeight.Black,
-            fontSize = 10.5.sp,
-            modifier = Modifier.width(82.dp)
+            fontSize = 10.sp,
+            modifier = Modifier.width(80.dp)
         )
         Text(
             text = ": ",
             color = OFFICIAL_LABEL_RED,
             fontWeight = FontWeight.Black,
-            fontSize = 10.5.sp
+            fontSize = 10.sp
         )
         Text(
             text = value,
             color = Color(0xFF111827),
             fontWeight = FontWeight.ExtraBold,
-            fontSize = 10.5.sp,
-            lineHeight = 12.5.sp,
+            fontSize = 10.2.sp,
+            lineHeight = 12.sp,
             maxLines = if (isAddress) 2 else 1,
-            overflow = TextOverflow.Clip
+            overflow = TextOverflow.Ellipsis
         )
     }
 }
@@ -524,11 +525,11 @@ private fun SignatureBlock(
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.width(86.dp)
+        modifier = Modifier.width(78.dp)
     ) {
         Text(
             text = title,
-            fontSize = 7.sp,
+            fontSize = 6.6.sp,
             fontWeight = FontWeight.Black,
             color = Color(0xFF7F1D1D),
             textAlign = TextAlign.Center,
@@ -538,8 +539,8 @@ private fun SignatureBlock(
             painter = painterResource(id = signatureRes),
             contentDescription = title,
             modifier = Modifier
-                .height(18.dp)
-                .width(68.dp)
+                .height(13.dp)
+                .width(52.dp)
         )
     }
 }
