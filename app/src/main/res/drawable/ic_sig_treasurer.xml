@@ -5,7 +5,7 @@
     android:viewportWidth="150"
     android:viewportHeight="60">
     
-    <!-- Exact reproduction of State Treasurer signature (Blue Ink) -->
+    <!-- Exact reproduction of State Treasurer signature (Official Blue Ink / நீல நிற மை) -->
     <!-- Initial flowing wave on left -->
     <path
         android:pathData="M24,34 C28,26 32,18 36,18 C40,18 38,32 36,40 C34,46 42,42 46,38"

@@ -140,9 +140,14 @@ fun VerificationScannerDialog(
                     onClick = {
                         hasSearched = true
                         val query = searchId.trim()
+                        val parsed = com.example.util.QRCodeGenerator.parseVerificationPayload(query)
+                        val targetId = parsed["ID"] ?: query
+
                         verifiedCard = allCards.firstOrNull {
-                            it.memberId.equals(query, ignoreCase = true) ||
+                            it.memberId.equals(targetId, ignoreCase = true) ||
+                                    it.memberId.equals(query, ignoreCase = true) ||
                                     it.name.contains(query, ignoreCase = true) ||
+                                    (parsed["NAME"] != null && it.name.contains(parsed["NAME"]!!, ignoreCase = true)) ||
                                     it.qrVerificationCode.contains(query, ignoreCase = true)
                         }
                     },

@@ -22,12 +22,14 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
@@ -327,6 +329,37 @@ fun ProfessionalMemberIdCardLayout(
                                 value = card.address.ifBlank { "1/14 அம்பலக்காரன் பட்டி, மதுரை" },
                                 isAddress = true
                             )
+
+                            // Digital Verification QR Code
+                            val qrImageBitmap = remember(card) {
+                                com.example.util.QRCodeGenerator.generateCardQrBitmap(card, size = 100)
+                            }
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(top = 2.dp)
+                            ) {
+                                androidx.compose.foundation.Image(
+                                    bitmap = qrImageBitmap.asImageBitmap(),
+                                    contentDescription = "Verification QR Code",
+                                    modifier = Modifier
+                                        .size(28.dp)
+                                        .clip(RoundedCornerShape(2.dp))
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Column {
+                                    Text(
+                                        text = "சரிபார்ப்பு QR Code",
+                                        fontSize = 7.5.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF1E293B)
+                                    )
+                                    Text(
+                                        text = "Scan to Verify ID",
+                                        fontSize = 6.5.sp,
+                                        color = Color(0xFF64748B)
+                                    )
+                                }
+                            }
                         }
 
                         // Right Govt Accreditation Seal Section

@@ -159,4 +159,32 @@ class ExampleRobolectricTest {
         assertTrue(dualSheet.width >= frontBmp.width)
         assertTrue(dualSheet.height >= frontBmp.height + backBmp.height)
     }
+
+    @Test
+    fun `test qr code generator payload encoding and verification parsing`() {
+        val sampleCard = MemberCardEntity(
+            memberId = "TN-MDU-1024",
+            name = "மு. கார்த்திகேயன்",
+            district = "மதுரை",
+            phone = "9876543210",
+            bloodGroup = "O +ve",
+            approvalStatus = "APPROVED"
+        )
+
+        val payload = com.example.util.QRCodeGenerator.createMemberVerificationPayload(sampleCard)
+        assertTrue(payload.contains("TN-MDU-1024"))
+        assertTrue(payload.contains("மு. கார்த்திகேயன்"))
+        assertTrue(payload.contains("மதுரை"))
+
+        val qrBmp = com.example.util.QRCodeGenerator.generateCardQrBitmap(sampleCard, 150)
+        assertNotNull(qrBmp)
+        assertEquals(150, qrBmp.width)
+        assertEquals(150, qrBmp.height)
+
+        val parsed = com.example.util.QRCodeGenerator.parseVerificationPayload(payload)
+        assertEquals("TN-MDU-1024", parsed["ID"])
+        assertEquals("மு. கார்த்திகேயன்", parsed["NAME"])
+        assertEquals("மதுரை", parsed["DIST"])
+        assertEquals("APPROVED", parsed["STATUS"])
+    }
 }

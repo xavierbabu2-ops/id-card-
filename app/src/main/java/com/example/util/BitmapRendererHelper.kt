@@ -266,6 +266,28 @@ object BitmapRendererHelper {
 
             canvas.drawText("ஒன்றுபடுவோம்!", rightCenterX, height - 110f, rightTextPaint)
             canvas.drawText("உரிமையை மீட்போம்.", rightCenterX, height - 75f, rightTextPaint)
+
+            // Draw Official Verification QR Code on Back Side
+            try {
+                val qrBmp = com.example.util.QRCodeGenerator.generateCardQrBitmap(card, 120)
+                canvas.drawBitmap(qrBmp, labelX, height - 195f, null)
+
+                val qrLabelPaint = Paint().apply {
+                    color = Color.parseColor("#1E293B")
+                    textSize = 18f
+                    isFakeBoldText = true
+                    isAntiAlias = true
+                }
+                canvas.drawText("சரிபார்ப்பு QR குறியீடு (Scan for Verification)", labelX + 130f, height - 145f, qrLabelPaint)
+                val qrSubPaint = Paint().apply {
+                    color = Color.parseColor("#64748B")
+                    textSize = 14f
+                    isAntiAlias = true
+                }
+                canvas.drawText("TNPA Official Digital Verified", labelX + 130f, height - 120f, qrSubPaint)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
 
         // 3. BOTTOM RED BANNER
