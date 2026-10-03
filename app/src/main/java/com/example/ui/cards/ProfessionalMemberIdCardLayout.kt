@@ -58,7 +58,8 @@ fun ProfessionalMemberIdCardLayout(
     isBackSide: Boolean = false,
     onLogoClick: (() -> Unit)? = null,
     onPhotoClick: (() -> Unit)? = null,
-    onNameOrAddressClick: (() -> Unit)? = null
+    onNameOrAddressClick: (() -> Unit)? = null,
+    onSealClick: (() -> Unit)? = null
 ) {
     Card(
         modifier = modifier
@@ -362,13 +363,17 @@ fun ProfessionalMemberIdCardLayout(
                             }
                         }
 
-                        // Right Govt Accreditation Seal Section
+                        // Right Govt Accreditation Seal Section (Tap to customize via gallery)
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.Center,
                             modifier = Modifier
                                 .weight(0.75f)
                                 .padding(start = 2.dp)
+                                .clip(RoundedCornerShape(6.dp))
+                                .then(
+                                    if (onSealClick != null) Modifier.clickable { onSealClick() } else Modifier
+                                )
                         ) {
                             Text(
                                 text = "தமிழ்நாடு அரசு அனுமதி\nபெற்ற சங்கம்",
@@ -379,11 +384,20 @@ fun ProfessionalMemberIdCardLayout(
                                 lineHeight = 9.5.sp
                             )
                             Spacer(modifier = Modifier.height(2.dp))
-                            Image(
-                                painter = painterResource(id = R.drawable.ic_auth_accreditation),
-                                contentDescription = "Tamil Nadu Govt Recognition Seal",
-                                modifier = Modifier.size(width = 62.dp, height = 66.dp)
-                            )
+                            if (card.customSealUri != null) {
+                                AsyncImage(
+                                    model = card.customSealUri,
+                                    contentDescription = "Custom Tamil Nadu Govt Recognition Seal",
+                                    contentScale = ContentScale.Fit,
+                                    modifier = Modifier.size(width = 62.dp, height = 66.dp)
+                                )
+                            } else {
+                                Image(
+                                    painter = painterResource(id = R.drawable.ic_auth_accreditation),
+                                    contentDescription = "Tamil Nadu Govt Recognition Seal",
+                                    modifier = Modifier.size(width = 62.dp, height = 66.dp)
+                                )
+                            }
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
                                 text = "ஒன்றுபடுவோம்!\nஉரிமையை மீட்போம்.",

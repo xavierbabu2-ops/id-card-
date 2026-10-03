@@ -117,6 +117,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _snackbarMessage.value = "சங்கக் கொடி படம் மாற்றப்பட்டது! (Flag Updated)"
     }
 
+    fun updateCustomSeal(uri: String?) {
+        _currentCard.value = _currentCard.value.copy(customSealUri = uri)
+        _snackbarMessage.value = "தமிழ்நாடு அரசு அங்கீகார முத்திரை மாற்றப்பட்டது! (Govt Seal Updated)"
+    }
+
+    fun resetCustomSeal() {
+        _currentCard.value = _currentCard.value.copy(customSealUri = null)
+        _snackbarMessage.value = "அரசு அங்கீகார முத்திரை இயல்புநிலைக்கு மாற்றப்பட்டது!"
+    }
+
     fun updateMemberPhoto(uri: String?) {
         _currentCard.value = _currentCard.value.copy(photoUri = uri)
         _snackbarMessage.value = "உறுப்பினர் புகைப்படம் மாற்றப்பட்டது! (Photo Updated)"

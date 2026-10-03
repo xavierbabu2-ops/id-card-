@@ -666,6 +666,50 @@ fun CameraCaptureScreen(
                         OcrRow("முகவரி (Address)", result.address)
                         OcrRow("ஆதார் எண்", result.aadhaarNumber)
 
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Text(
+                            text = "மாவட்டம் மாற்றுக (Change District):",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF64748B)
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            listOf("மதுரை", "சென்னை", "கோவை", "திருச்சி", "சேலம்").forEach { dist ->
+                                val fullDist = when (dist) {
+                                    "கோவை" -> "கோயம்புத்தூர்"
+                                    else -> dist
+                                }
+                                val isSelected = result.district == fullDist
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(if (isSelected) UnionRed else Color(0xFFF1F5F9))
+                                        .clickable {
+                                            val newMemberId = com.example.util.DistrictCodeHelper.generateDistrictMemberId(fullDist, currentCard.cardType)
+                                            extractedOcrResult = result.copy(
+                                                district = fullDist,
+                                                generatedMemberId = newMemberId,
+                                                address = result.address.substringBeforeLast(",") + ", " + fullDist
+                                            )
+                                        }
+                                        .padding(vertical = 5.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = dist,
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (isSelected) Color.White else Color(0xFF334155)
+                                    )
+                                }
+                            }
+                        }
+
                         Spacer(modifier = Modifier.height(16.dp))
 
                         Button(

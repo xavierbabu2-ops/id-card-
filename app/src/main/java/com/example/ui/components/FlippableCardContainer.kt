@@ -34,7 +34,8 @@ fun FlippableCardContainer(
     onLogoClick: (() -> Unit)? = null,
     onFlagClick: (() -> Unit)? = null,
     onPhotoClick: (() -> Unit)? = null,
-    onNameOrAddressClick: (() -> Unit)? = null
+    onNameOrAddressClick: (() -> Unit)? = null,
+    onSealClick: (() -> Unit)? = null
 ) {
     val rotation by animateFloatAsState(
         targetValue = if (cardFace == CardFace.Back) 180f else 0f,
@@ -75,7 +76,8 @@ fun FlippableCardContainer(
                         isBackSide = false,
                         onLogoClick = onLogoClick,
                         onPhotoClick = onPhotoClick,
-                        onNameOrAddressClick = onNameOrAddressClick
+                        onNameOrAddressClick = onNameOrAddressClick,
+                        onSealClick = onSealClick
                     )
                 } else {
                     Box(
@@ -88,7 +90,8 @@ fun FlippableCardContainer(
                             isBackSide = true,
                             onLogoClick = onLogoClick,
                             onPhotoClick = onPhotoClick,
-                            onNameOrAddressClick = onNameOrAddressClick
+                            onNameOrAddressClick = onNameOrAddressClick,
+                            onSealClick = onSealClick
                         )
                     }
                 }

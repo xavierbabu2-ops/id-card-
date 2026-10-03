@@ -187,4 +187,34 @@ class ExampleRobolectricTest {
         assertEquals("மதுரை", parsed["DIST"])
         assertEquals("APPROVED", parsed["STATUS"])
     }
+
+    @Test
+    fun `test aadhaar ocr apply to card and custom seal entity`() {
+        val baseCard = MemberCardEntity(
+            memberId = "TN-MDU-0001",
+            name = "பழைய பெயர்",
+            district = "மதுரை"
+        )
+        val ocrResult = com.example.util.AadhaarOcrResult(
+            name = "மு. கார்த்திகேயன்",
+            fatherName = "முத்துசாமி",
+            age = "34",
+            dob = "15/06/1990",
+            gender = "ஆண் (Male)",
+            address = "1/14 அம்பலக்காரன் பட்டி, மதுரை 625107",
+            district = "மதுரை",
+            aadhaarNumber = "1234 5678 9012",
+            generatedMemberId = "TN-MDU-1024"
+        )
+
+        val appliedCard = com.example.util.AadhaarOcrParser.applyToMemberCard(baseCard, ocrResult)
+        assertEquals("TN-MDU-1024", appliedCard.memberId)
+        assertEquals("மு. கார்த்திகேயன்", appliedCard.name)
+        assertEquals("முத்துசாமி", appliedCard.fatherName)
+        assertEquals("34", appliedCard.age)
+        assertEquals("1234 5678 9012", appliedCard.aadhaarNumber)
+
+        val withSealCard = appliedCard.copy(customSealUri = "content://media/external/images/media/999")
+        assertEquals("content://media/external/images/media/999", withSealCard.customSealUri)
+    }
 }

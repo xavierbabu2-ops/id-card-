@@ -130,6 +130,15 @@ fun CardMakerScreen(
         }
     }
 
+    // Govt Accreditation Seal Gallery Picker
+    val sealPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            viewModel.updateCustomSeal(uri.toString())
+        }
+    }
+
     LaunchedEffect(snackbarMessage) {
         snackbarMessage?.let {
             snackbarHostState.showSnackbar(it)
@@ -465,6 +474,11 @@ fun CardMakerScreen(
                                     },
                                     onNameOrAddressClick = {
                                         viewModel.openCamera(CameraMode.AADHAAR_SCAN)
+                                    },
+                                    onSealClick = {
+                                        sealPickerLauncher.launch(
+                                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                        )
                                     }
                                 )
                             }

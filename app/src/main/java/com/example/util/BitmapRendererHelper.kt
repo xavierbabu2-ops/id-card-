@@ -248,17 +248,39 @@ object BitmapRendererHelper {
             canvas.drawText("தமிழ்நாடு அரசு அனுமதி", rightCenterX, headerHeight + 45f, rightTextPaint)
             canvas.drawText("பெற்ற சங்கம்", rightCenterX, headerHeight + 82f, rightTextPaint)
 
-            // Draw Real Official Accreditation Seal and Leaders Graphic
+            // Draw Real Official Accreditation Seal (Default or Custom from Gallery)
             try {
-                val sealDrawable = androidx.core.content.ContextCompat.getDrawable(context, R.drawable.ic_auth_accreditation)
-                if (sealDrawable != null) {
-                    val sealW = 200
-                    val sealH = 240
-                    val sealBmp = Bitmap.createBitmap(sealW, sealH, Bitmap.Config.ARGB_8888)
-                    val sealCanvas = Canvas(sealBmp)
-                    sealDrawable.setBounds(0, 0, sealW, sealH)
-                    sealDrawable.draw(sealCanvas)
-                    canvas.drawBitmap(sealBmp, rightCenterX - sealW / 2f, headerHeight + 92f, null)
+                val sealW = 200
+                val sealH = 240
+                var customLoaded = false
+
+                if (!card.customSealUri.isNullOrBlank()) {
+                    try {
+                        val uri = android.net.Uri.parse(card.customSealUri)
+                        val inputStream = context.contentResolver.openInputStream(uri)
+                        if (inputStream != null) {
+                            val decoded = android.graphics.BitmapFactory.decodeStream(inputStream)
+                            inputStream.close()
+                            if (decoded != null) {
+                                val scaled = Bitmap.createScaledBitmap(decoded, sealW, sealH, true)
+                                canvas.drawBitmap(scaled, rightCenterX - sealW / 2f, headerHeight + 92f, null)
+                                customLoaded = true
+                            }
+                        }
+                    } catch (ex: Exception) {
+                        ex.printStackTrace()
+                    }
+                }
+
+                if (!customLoaded) {
+                    val sealDrawable = androidx.core.content.ContextCompat.getDrawable(context, R.drawable.ic_auth_accreditation)
+                    if (sealDrawable != null) {
+                        val sealBmp = Bitmap.createBitmap(sealW, sealH, Bitmap.Config.ARGB_8888)
+                        val sealCanvas = Canvas(sealBmp)
+                        sealDrawable.setBounds(0, 0, sealW, sealH)
+                        sealDrawable.draw(sealCanvas)
+                        canvas.drawBitmap(sealBmp, rightCenterX - sealW / 2f, headerHeight + 92f, null)
+                    }
                 }
             } catch (e: Exception) {
                 e.printStackTrace()

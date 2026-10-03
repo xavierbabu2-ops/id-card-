@@ -25,6 +25,7 @@ data class MemberCardEntity(
     val photoUri: String? = null,
     val customLogoUri: String? = null,
     val customFlagUri: String? = null,
+    val customSealUri: String? = null,
     val aadhaarNumber: String? = null,
     val avatarPreset: Int = 1,
     val themeColorHex: String = "#D3121B",

@@ -137,6 +137,14 @@ fun CardFormEditor(
         }
     }
 
+    val sealPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            onCardChange(card.copy(customSealUri = uri.toString()))
+        }
+    }
+
     var tradeExpanded by remember { mutableStateOf(false) }
     var districtExpanded by remember { mutableStateOf(false) }
     var bloodExpanded by remember { mutableStateOf(false) }
@@ -783,6 +791,86 @@ fun CardFormEditor(
                     focusedLabelColor = UnionRed
                 )
             )
+
+            // -------------------------------------------------------------
+            // Government Accreditation Seal / Logo Section (அரசு அங்கீகார முத்திரை)
+            // -------------------------------------------------------------
+            Spacer(modifier = Modifier.height(14.dp))
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC)),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0))
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Text(
+                        text = "🏛️ தமிழ்நாடு அரசு அனுமதி பெற்ற சங்கம் முத்திரை:",
+                        fontSize = 11.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF1E293B)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(50.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .border(1.dp, Color(0xFFCBD5E1), RoundedCornerShape(8.dp))
+                                .background(Color.White),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (card.customSealUri != null) {
+                                coil.compose.AsyncImage(
+                                    model = card.customSealUri,
+                                    contentDescription = "Custom Seal",
+                                    modifier = Modifier.size(44.dp)
+                                )
+                            } else {
+                                androidx.compose.foundation.Image(
+                                    painter = androidx.compose.ui.res.painterResource(id = com.example.R.drawable.ic_auth_accreditation),
+                                    contentDescription = "Default Seal",
+                                    modifier = Modifier.size(44.dp)
+                                )
+                            }
+                        }
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Button(
+                                    onClick = {
+                                        sealPickerLauncher.launch(
+                                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                        )
+                                    },
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0284C7)),
+                                    shape = RoundedCornerShape(8.dp),
+                                    contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                                    modifier = Modifier.height(34.dp)
+                                ) {
+                                    Icon(Icons.Default.AddPhotoAlternate, contentDescription = null, modifier = Modifier.size(14.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("கேலரியில் மாற்று", fontSize = 10.5.sp, fontWeight = FontWeight.Bold)
+                                }
+
+                                if (card.customSealUri != null) {
+                                    OutlinedButton(
+                                        onClick = { onCardChange(card.copy(customSealUri = null)) },
+                                        shape = RoundedCornerShape(8.dp),
+                                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                                        modifier = Modifier.height(34.dp)
+                                    ) {
+                                        Text("இயல்புநிலை (Reset)", fontSize = 10.sp)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
 
             Spacer(modifier = Modifier.height(18.dp))
 
