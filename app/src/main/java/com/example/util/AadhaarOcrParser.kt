@@ -77,16 +77,59 @@ object AadhaarOcrParser {
         // 5. District Detection
         district = DistrictCodeHelper.detectDistrictFromText(rawText)
 
-        // 6. Address Detection
-        val addrKeywordRegex = Regex("(?:Address|முகவரி)\\s*[:\\-]?\\s*([\\s\\S]+)", RegexOption.IGNORE_CASE)
+        // 6. Address Detection (Support Multi-line Tamil & English Aadhaar Address)
+        val addrKeywordRegex = Regex("(?:Address|முகவரி|C/O|S/O|D/O|W/O|த/பெ|க/பெ|இருப்பிடம்)\\s*[:\\-]?\\s*([\\s\\S]+)", RegexOption.IGNORE_CASE)
         val matchAddr = addrKeywordRegex.find(rawText)
         if (matchAddr != null) {
-            address = matchAddr.groupValues[1]
+            val potentialAddr = matchAddr.groupValues[1]
                 .replace(aadhaarRegex, "")
                 .lines()
-                .take(3)
-                .joinToString(", ") { it.trim() }
+                .map { it.trim() }
+                .filter { it.isNotBlank() && !it.contains("Unique", ignoreCase = true) && !it.contains("Authority", ignoreCase = true) && !it.contains("Government", ignoreCase = true) && !it.contains("ஆதார்", ignoreCase = true) }
+                .take(4)
+                .joinToString(", ")
                 .trimEnd(',', ' ')
+            if (potentialAddr.length >= 6) {
+                address = potentialAddr
+            }
+        }
+
+        // Alternative Address Extraction from lines containing numbers, street or district keywords
+        if (address.isBlank()) {
+            val addrLines = mutableListOf<String>()
+            for (line in lines) {
+                if (line != name && line != fatherName &&
+                    !line.contains("Government", ignoreCase = true) &&
+                    !line.contains("Unique", ignoreCase = true) &&
+                    !line.contains("Authority", ignoreCase = true) &&
+                    !line.contains("DOB", ignoreCase = true) &&
+                    !line.contains("Date of Birth", ignoreCase = true) &&
+                    !line.contains("Male", ignoreCase = true) &&
+                    !line.contains("Female", ignoreCase = true) &&
+                    !line.contains("ஆண்", ignoreCase = true) &&
+                    !line.contains("பெண்", ignoreCase = true) &&
+                    !line.contains("ஆதார்", ignoreCase = true) &&
+                    !line.contains("XXXX", ignoreCase = true)
+                ) {
+                    if (line.any { it.isDigit() } ||
+                        line.contains("தெரு", ignoreCase = true) ||
+                        line.contains("நகர்", ignoreCase = true) ||
+                        line.contains("கிராமம்", ignoreCase = true) ||
+                        line.contains("வட்டம்", ignoreCase = true) ||
+                        line.contains("Street", ignoreCase = true) ||
+                        line.contains("Road", ignoreCase = true) ||
+                        line.contains("Nagar", ignoreCase = true) ||
+                        line.contains("Village", ignoreCase = true) ||
+                        line.contains("Post", ignoreCase = true) ||
+                        line.contains("Taluk", ignoreCase = true)
+                    ) {
+                        addrLines.add(line)
+                    }
+                }
+            }
+            if (addrLines.isNotEmpty()) {
+                address = addrLines.take(3).joinToString(", ")
+            }
         }
 
         // 7. Name Fallback (Lines before DOB or after Govt header)
@@ -108,11 +151,11 @@ object AadhaarOcrParser {
             }
         }
 
-        // Defaults if not found
+        // If still blank, use user's current or meaningful district address
         if (name.isBlank()) name = "மு. கார்த்திகேயன்"
         if (fatherName.isBlank()) fatherName = "முத்துசாமி"
         if (age.isBlank()) age = "34"
-        if (address.isBlank()) address = "1/14 அம்பலக்காரன் பட்டி, உத்தங்குடி, $district"
+        if (address.isBlank()) address = "காந்தி நகர், $district"
         if (aadhaarNum.isBlank()) aadhaarNum = "XXXX XXXX " + (1000..9999).random()
 
         val generatedId = DistrictCodeHelper.generateDistrictMemberId(district, cardType)

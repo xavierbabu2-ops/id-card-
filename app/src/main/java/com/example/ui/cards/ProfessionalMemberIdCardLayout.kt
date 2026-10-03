@@ -453,30 +453,31 @@ private fun FrontDetailRow(
     value: String
 ) {
     Row(
-        verticalAlignment = Alignment.Top,
+        verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.fillMaxWidth()
     ) {
         Text(
             text = label,
             color = OFFICIAL_LABEL_RED,
             fontWeight = FontWeight.Black,
-            fontSize = 11.2.sp,
-            modifier = Modifier.width(110.dp)
+            fontSize = 11.sp,
+            modifier = Modifier.width(98.dp)
         )
         Text(
             text = ": ",
             color = OFFICIAL_LABEL_RED,
             fontWeight = FontWeight.Black,
-            fontSize = 11.2.sp
+            fontSize = 11.sp,
+            modifier = Modifier.padding(horizontal = 1.dp)
         )
         Text(
             text = value,
-            color = Color(0xFF111827),
-            fontWeight = FontWeight.ExtraBold,
+            color = Color(0xFF0F172A),
+            fontWeight = FontWeight.Black,
             fontSize = 11.2.sp,
             lineHeight = 13.sp,
             maxLines = 2,
-            overflow = TextOverflow.Clip
+            overflow = TextOverflow.Ellipsis
         )
     }
 }

@@ -62,6 +62,7 @@ import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
@@ -663,7 +664,20 @@ fun CameraCaptureScreen(
                         OcrRow("தந்தை / கணவர்", result.fatherName)
                         OcrRow("வயது / பிறந்த தேதி", "${result.age} (${result.dob})")
                         OcrRow("மாவட்டம் (District)", result.district, isHighlight = true)
-                        OcrRow("முகவரி (Address)", result.address)
+                        
+                        Spacer(modifier = Modifier.height(4.dp))
+                        OutlinedTextField(
+                            value = result.address,
+                            onValueChange = { newAddr ->
+                                val detected = com.example.util.DistrictCodeHelper.detectDistrictFromText(newAddr)
+                                val newId = com.example.util.DistrictCodeHelper.generateDistrictMemberId(detected, currentCard.cardType)
+                                extractedOcrResult = result.copy(address = newAddr, district = detected, generatedMemberId = newId)
+                            },
+                            label = { Text("ஆதார் முகவரி (Edit Aadhaar Address)", fontSize = 10.sp) },
+                            maxLines = 2,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
                         OcrRow("ஆதார் எண்", result.aadhaarNumber)
 
                         Spacer(modifier = Modifier.height(10.dp))

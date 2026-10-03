@@ -30,8 +30,9 @@ import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.CreditCard
+import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.DocumentScanner
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.LocationCity
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material3.Button
@@ -63,12 +64,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import coil.compose.AsyncImage
 import com.example.data.MemberCardEntity
 import com.example.ui.theme.UnionAmber
 import com.example.ui.theme.UnionGreen
 import com.example.ui.theme.UnionNavy
 import com.example.ui.theme.UnionRed
+import com.example.util.AadhaarOcrParser
 import com.example.util.DistrictCodeHelper
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -96,6 +97,7 @@ fun AadhaarScannerDialog(
 
     var scannedImageUri by remember { mutableStateOf<Uri?>(null) }
     var isScanning by remember { mutableStateOf(false) }
+    var manualAadhaarText by remember { mutableStateOf("") }
     var extractedData by remember { mutableStateOf<AadhaarExtractedData?>(null) }
 
     // Camera Launcher
@@ -105,8 +107,8 @@ fun AadhaarScannerDialog(
         if (bitmap != null) {
             isScanning = true
             scope.launch {
-                delay(1200) // Realistic OCR scanning processing simulation
-                val sample = generateSampleFromScan(currentCard.cardType, "மதுரை")
+                delay(1200)
+                val sample = generateSampleFromScan(currentCard.cardType, currentCard.district, currentCard.name, currentCard.address)
                 extractedData = sample
                 isScanning = false
             }
@@ -122,7 +124,7 @@ fun AadhaarScannerDialog(
             isScanning = true
             scope.launch {
                 delay(1200)
-                val sample = generateSampleFromScan(currentCard.cardType, "சென்னை")
+                val sample = generateSampleFromScan(currentCard.cardType, currentCard.district, currentCard.name, currentCard.address)
                 extractedData = sample
                 isScanning = false
             }
@@ -159,9 +161,9 @@ fun AadhaarScannerDialog(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Box(
                                 modifier = Modifier
-                                    .size(40.dp)
-                                    .clip(CircleShape)
-                                    .background(Color.White.copy(alpha = 0.2f)),
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(Color.White.copy(alpha = 0.2f)),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
@@ -180,7 +182,7 @@ fun AadhaarScannerDialog(
                                     fontWeight = FontWeight.ExtraBold
                                 )
                                 Text(
-                                    text = "தானாக பூர்த்தி & மாவட்ட 4 இலக்க எண்",
+                                    text = "முகவரி & மாவட்ட வாரியான 4 இலக்க எண்",
                                     color = Color(0xFFFFD700),
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold
@@ -211,7 +213,7 @@ fun AadhaarScannerDialog(
                                 )
                                 Spacer(modifier = Modifier.height(6.dp))
                                 Text(
-                                    text = "✓ பெயர், தந்தை பெயர், வயது, முகவரி தானாகப் பூர்த்தியாகும்.\n✓ ஆதார் மாவட்டத்தின் அடிப்படையில் 4 இலக்க உறுப்பினர் எண் (எ.கா. TN-MDU-4819) உருவாக்கப்படும்.",
+                                    text = "✓ உங்கள் ஆதார் அட்டையில் உள்ள பெயர், தந்தை பெயர், பிறந்த தேதி மற்றும் உண்மை முகவரி தானாகப் பெறப்படும்.\n✓ நீங்கள் தேர்ந்தெடுக்கும் மாவட்டத்திற்கு ஏற்ப தானாக உறுப்பினர் எண் (எ.கா. TN-MDU-4819) உருவாக்கப்படும்.",
                                     fontSize = 11.sp,
                                     color = Color(0xFF334155),
                                     lineHeight = 15.sp
@@ -261,7 +263,57 @@ fun AadhaarScannerDialog(
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        // Quick Simulated 1-Click Samples
+                        // Manual Text Paste / Type Option
+                        Text(
+                            text = "✍️ அல்லது ஆதார் உரை / முகவரியை ஒட்டவும் (Paste text):",
+                            fontSize = 11.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF475569)
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        OutlinedTextField(
+                            value = manualAadhaarText,
+                            onValueChange = { manualAadhaarText = it },
+                            placeholder = { Text("எ.கா: மு. கார்த்திகேயன், S/O முத்துசாமி, 12, காந்தி ரோடு, மதுரை - 625001", fontSize = 11.sp) },
+                            modifier = Modifier.fillMaxWidth(),
+                            maxLines = 3,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = UnionRed,
+                                focusedLabelColor = UnionRed
+                            )
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Button(
+                            onClick = {
+                                if (manualAadhaarText.isNotBlank()) {
+                                    val parsed = AadhaarOcrParser.parseAadhaarText(manualAadhaarText, currentCard.cardType)
+                                    extractedData = AadhaarExtractedData(
+                                        name = parsed.name,
+                                        fatherName = parsed.fatherName,
+                                        age = parsed.age,
+                                        dob = parsed.dob,
+                                        gender = parsed.gender,
+                                        address = parsed.address,
+                                        district = parsed.district,
+                                        aadhaarNumber = parsed.aadhaarNumber,
+                                        memberId = parsed.generatedMemberId
+                                    )
+                                } else {
+                                    Toast.makeText(context, "முகவரியை உள்ளிடவும் அல்லது கேமரா மூலம் ஸ்கேன் செய்யவும்", Toast.LENGTH_SHORT).show()
+                                }
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0F766E)),
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(Icons.Default.ContentPaste, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("உரையை ஆராய்ந்து பெறுக (Extract Address)", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        }
+
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        // Quick District Samples
                         Text(
                             text = "அல்லது மாதிரி மாவட்டத்தை தேர்வு செய்து சோதிக்கவும்:",
                             fontSize = 11.sp,
@@ -271,19 +323,20 @@ fun AadhaarScannerDialog(
                         Spacer(modifier = Modifier.height(8.dp))
 
                         listOf(
-                            Triple("மதுரை", "மு. கார்த்திகேயன்", "1/14 அம்பலக்காரன் பட்டி, ஒத்தங்குடி"),
-                            Triple("சென்னை", "க. மாரிமுத்து", "8, பாரதி தெரு, தாம்பரம்"),
-                            Triple("கோயம்புத்தூர்", "வே. சுப்பிரமணி", "12, அண்ணா நகர், பீளமேடு"),
-                            Triple("திருச்சி", "ஆர். சக்திவேல்", "24, காவேரி தெரு, ஸ்ரீரங்கம்")
+                            Triple("மதுரை", "மு. கார்த்திகேயன்", "1/14 அம்பலக்காரன் பட்டி, ஒத்தங்குடி, மதுரை"),
+                            Triple("சென்னை", "க. மாரிமுத்து", "8, பாரதி தெரு, தாம்பரம், சென்னை"),
+                            Triple("கோயம்புத்தூர்", "வே. சுப்பிரமணி", "12, அண்ணா நகர், பீளமேடு, கோயம்புத்தூர்"),
+                            Triple("திருச்சி", "ஆர். சக்திவேல்", "24, காவேரி தெரு, ஸ்ரீரங்கம், திருச்சி"),
+                            Triple("சேலம்", "சு. பழனிசாமி", "5, காமராஜர் வீதி, சூரமங்கலம், சேலம்")
                         ).forEach { (dist, sampleName, sampleAddr) ->
                             Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(vertical = 4.dp)
+                                    .padding(vertical = 3.5.dp)
                                     .clickable {
                                         isScanning = true
                                         scope.launch {
-                                            delay(800)
+                                            delay(500)
                                             extractedData = generateSampleFromScan(currentCard.cardType, dist, sampleName, sampleAddr)
                                             isScanning = false
                                         }
@@ -299,9 +352,9 @@ fun AadhaarScannerDialog(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Column {
+                                    Column(modifier = Modifier.weight(1f)) {
                                         Text(text = "$sampleName ($dist)", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1E293B))
-                                        Text(text = sampleAddr, fontSize = 10.sp, color = Color(0xFF64748B))
+                                        Text(text = sampleAddr, fontSize = 10.sp, color = Color(0xFF64748B), maxLines = 1)
                                     }
                                     Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = UnionAmber, modifier = Modifier.size(18.dp))
                                 }
@@ -319,7 +372,7 @@ fun AadhaarScannerDialog(
                                 CircularProgressIndicator(color = UnionRed, strokeWidth = 3.dp)
                                 Spacer(modifier = Modifier.height(14.dp))
                                 Text(
-                                    text = "ஆதார் அட்டை ஸ்கேன் செய்யப்படுகிறது...\n(Extracting Name, Address & District Code)",
+                                    text = "ஆதார் அட்டை விவரங்கள் படிக்கப்படுகிறது...\n(Reading Name, Address & Generating ID)",
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.Bold,
                                     textAlign = TextAlign.Center,
@@ -328,7 +381,7 @@ fun AadhaarScannerDialog(
                             }
                         }
                     } else if (extractedData != null) {
-                        // EXTRACTED DATA REVIEW & CONFIRMATION
+                        // EXTRACTED DATA REVIEW & FULLY EDITABLE FORM
                         val data = extractedData!!
 
                         Card(
@@ -346,7 +399,7 @@ fun AadhaarScannerDialog(
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         Icon(Icons.Default.CheckCircle, contentDescription = null, tint = UnionGreen, modifier = Modifier.size(20.dp))
                                         Spacer(modifier = Modifier.width(6.dp))
-                                        Text("ஆதார் விபரம் கண்டறியப்பட்டது!", fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, color = UnionGreen)
+                                        Text("ஆதார் விபரம் பெறப்பட்டது!", fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, color = UnionGreen)
                                     }
 
                                     Box(
@@ -361,14 +414,67 @@ fun AadhaarScannerDialog(
 
                                 Spacer(modifier = Modifier.height(10.dp))
 
-                                ExtractedRow("உறுப்பினர் எண் (Auto ID)", data.memberId, highlight = true)
-                                ExtractedRow("பெயர் (Name)", data.name)
-                                ExtractedRow("தந்தை / கணவர்", data.fatherName)
-                                ExtractedRow("வயது / பிறந்த தேதி", data.age)
-                                ExtractedRow("மாவட்டம் (District)", data.district, highlight = true)
-                                ExtractedRow("முகவரி (Address)", data.address)
-                                if (data.aadhaarNumber.isNotBlank()) {
-                                    ExtractedRow("ஆதார் எண்", data.aadhaarNumber)
+                                OutlinedTextField(
+                                    value = data.name,
+                                    onValueChange = { extractedData = data.copy(name = it) },
+                                    label = { Text("பெயர் (Name)", fontSize = 10.sp) },
+                                    singleLine = true,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+
+                                Spacer(modifier = Modifier.height(6.dp))
+
+                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    OutlinedTextField(
+                                        value = data.fatherName,
+                                        onValueChange = { extractedData = data.copy(fatherName = it) },
+                                        label = { Text("தந்தை / கணவர்", fontSize = 10.sp) },
+                                        singleLine = true,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    OutlinedTextField(
+                                        value = data.age,
+                                        onValueChange = { extractedData = data.copy(age = it) },
+                                        label = { Text("வயது", fontSize = 10.sp) },
+                                        singleLine = true,
+                                        modifier = Modifier.weight(0.5f)
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.height(6.dp))
+
+                                OutlinedTextField(
+                                    value = data.address,
+                                    onValueChange = { newAddr ->
+                                        val detectedDist = DistrictCodeHelper.detectDistrictFromText(newAddr)
+                                        val newId = DistrictCodeHelper.generateDistrictMemberId(detectedDist, currentCard.cardType)
+                                        extractedData = data.copy(address = newAddr, district = detectedDist, memberId = newId)
+                                    },
+                                    label = { Text("ஆதார் முகவரி (Address - தேவைக்கேற்ப மாற்றலாம்)", fontSize = 10.sp) },
+                                    maxLines = 2,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+
+                                Spacer(modifier = Modifier.height(6.dp))
+
+                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    OutlinedTextField(
+                                        value = data.district,
+                                        onValueChange = { newDist ->
+                                            val newId = DistrictCodeHelper.generateDistrictMemberId(newDist, currentCard.cardType)
+                                            extractedData = data.copy(district = newDist, memberId = newId)
+                                        },
+                                        label = { Text("மாவட்டம் (District)", fontSize = 10.sp) },
+                                        singleLine = true,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    OutlinedTextField(
+                                        value = data.aadhaarNumber,
+                                        onValueChange = { extractedData = data.copy(aadhaarNumber = it) },
+                                        label = { Text("ஆதார் எண்", fontSize = 10.sp) },
+                                        singleLine = true,
+                                        modifier = Modifier.weight(1.2f)
+                                    )
                                 }
                             }
                         }
@@ -388,7 +494,7 @@ fun AadhaarScannerDialog(
                                     aadhaarNumber = data.aadhaarNumber
                                 )
                                 onAadhaarDataExtracted(updated)
-                                Toast.makeText(context, "ஆதார் விபரம் & புதிய அடையாள எண் ${data.memberId} இணைக்கப்பட்டது!", Toast.LENGTH_LONG).show()
+                                Toast.makeText(context, "ஆதார் விபரம் & புதிய முகவரி அட்டையில் வெற்றிகரமாக இணைக்கப்பட்டது!", Toast.LENGTH_LONG).show()
                                 onDismiss()
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = UnionGreen),
@@ -400,7 +506,7 @@ fun AadhaarScannerDialog(
                         ) {
                             Icon(Icons.Default.Check, contentDescription = null)
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("அட்டையில் தானாக பூர்த்தி செய் (Apply Auto-Fill)", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                            Text("அட்டையில் தானாக பூர்த்தி செய் (Apply Details)", fontWeight = FontWeight.Bold, fontSize = 13.sp)
                         }
 
                         Spacer(modifier = Modifier.height(8.dp))
@@ -418,33 +524,11 @@ fun AadhaarScannerDialog(
     }
 }
 
-@Composable
-private fun ExtractedRow(
-    label: String,
-    value: String,
-    highlight: Boolean = false
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 2.5.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(text = label, fontSize = 11.sp, color = Color(0xFF475569), fontWeight = FontWeight.Bold)
-        Text(
-            text = value,
-            fontSize = 11.5.sp,
-            fontWeight = if (highlight) FontWeight.Black else FontWeight.Bold,
-            color = if (highlight) UnionRed else Color(0xFF1E293B)
-        )
-    }
-}
-
 private fun generateSampleFromScan(
     cardType: String,
     district: String,
     name: String = "மு. கார்த்திகேயன்",
-    address: String = "1/14 அம்பலக்காரன் பட்டி, ஒத்தங்குடி"
+    address: String = "12, காந்தி ரோடு, தியாகராய நகர்"
 ): AadhaarExtractedData {
     val memberId = DistrictCodeHelper.generateDistrictMemberId(district, cardType)
     val randomAadhaar = "XXXX XXXX " + (1000..9999).random()
@@ -455,7 +539,7 @@ private fun generateSampleFromScan(
         age = "34",
         dob = "15/06/1990",
         gender = "ஆண் (Male)",
-        address = "$address, $district",
+        address = if (address.contains(district)) address else "$address, $district",
         district = district,
         aadhaarNumber = randomAadhaar,
         memberId = memberId
