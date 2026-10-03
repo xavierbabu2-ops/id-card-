@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">TN Painters ID</string>
+    <string name="association_full_name">தமிழ்நாடு பெயிண்டர்கள் மற்றும் ஓவியர்கள் முன்னேற்ற சங்கம்</string>
+    <string name="association_subtitle">அடையாள அட்டை தயாரிப்பு மென்பொருள்</string>
+    <string name="association_reg_no">அரசு பதிவு எண் : TNMDUJCLMDUTU-50-26-00044</string>
+    <string name="association_address">1/14 அம்பலக்காரன் பட்டி, ஒத்தங்குடி, மதுரை - 625107</string>
+    <string name="association_motto_1">உழைப்போம்....... உயர்வோம் ......</string>
+    <string name="association_motto_2">ஒன்றுபடுவோம்! உரிமையை மீட்போம்.</string>
+</resources>

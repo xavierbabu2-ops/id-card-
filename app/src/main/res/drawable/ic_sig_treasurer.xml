@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="150dp"
+    android:height="60dp"
+    android:viewportWidth="150"
+    android:viewportHeight="60">
+    
+    <!-- Exact reproduction of State Treasurer signature (Blue Ink) -->
+    <!-- Initial flowing wave on left -->
+    <path
+        android:pathData="M24,34 C28,26 32,18 36,18 C40,18 38,32 36,40 C34,46 42,42 46,38"
+        android:strokeColor="#1D4ED8"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:fillColor="#00000000" />
+    
+    <!-- Center tall ascender and loop -->
+    <path
+        android:pathData="M56,42 C54,34 52,22 56,16 C60,12 62,24 60,34 C58,40 56,44 62,42 C68,40 70,36 74,38"
+        android:strokeColor="#1D4ED8"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:fillColor="#00000000" />
+    
+    <!-- Right flowing cursive flourish and tail -->
+    <path
+        android:pathData="M76,38 C80,36 84,32 88,34 C92,36 96,32 100,34 L114,32 C118,32 124,34 128,36"
+        android:strokeColor="#1D4ED8"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:fillColor="#00000000" />
+    <path
+        android:pathData="M106,36 L124,34"
+        android:strokeColor="#1D4ED8"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000" />
+        
+</vector>

@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="250dp"
+    android:height="250dp"
+    android:viewportWidth="250"
+    android:viewportHeight="250">
+    
+    <!-- ========================================================================= -->
+    <!-- OFFICIAL TNPA² ASSOCIATION LOGO - ULTRA HIGH CLARITY & DEFINITION         -->
+    <!-- Circular Seal with Raised Fist Holding Paint Brush, Roller & Spray Gun    -->
+    <!-- ========================================================================= -->
+
+    <!-- Outer Black Border -->
+    <path
+        android:pathData="M125,125m-122,0a122,122 0 1,0 244,0a122,122 0 1,0 -244,0"
+        android:strokeWidth="2.5"
+        android:strokeColor="#0F172A"
+        android:fillColor="#DC141E" />
+    
+    <!-- Inner White Circular Field -->
+    <path
+        android:pathData="M125,125m-96,0a96,96 0 1,0 192,0a96,96 0 1,0 -192,0"
+        android:fillColor="#FFFFFF"
+        android:strokeColor="#0F172A"
+        android:strokeWidth="3.5" />
+    
+    <!-- Outer Red Ring Accent Dots / Star Badges -->
+    <path
+        android:pathData="M18,125m-5,0a5,5 0 1,0 10,0a5,5 0 1,0 -10,0"
+        android:fillColor="#FFFFFF" />
+    <path
+        android:pathData="M232,125m-5,0a5,5 0 1,0 10,0a5,5 0 1,0 -10,0"
+        android:fillColor="#FFFFFF" />
+    <path
+        android:pathData="M125,18m-4,0a4,4 0 1,0 8,0a4,4 0 1,0 -8,0"
+        android:fillColor="#FFFFFF" />
+
+    <!-- 1. PAINT BRUSH (Pointing to Top-Left) -->
+    <!-- Long Wooden Handle -->
+    <path
+        android:pathData="M102,112 L48,58 L58,48 L112,102 Z"
+        android:fillColor="#1E293B" />
+    <!-- Shiny Silver Metal Ferrule -->
+    <path
+        android:pathData="M46,60 L32,46 L42,36 L56,50 Z"
+        android:fillColor="#94A3B8"
+        android:strokeColor="#0F172A"
+        android:strokeWidth="1.8" />
+    <!-- Fine Brush Bristles with Wet Paint Tip -->
+    <path
+        android:pathData="M32,46 C20,34 16,18 36,24 C44,30 42,36 42,36 Z"
+        android:fillColor="#DC141E"
+        android:strokeColor="#0F172A"
+        android:strokeWidth="1.5" />
+
+    <!-- 2. FLAT WIDE WALL BRUSH (Pointing to Left) -->
+    <!-- Handle -->
+    <path
+        android:pathData="M92,120 L48,96 L54,84 L98,108 Z"
+        android:fillColor="#1E293B" />
+    <!-- Metal Band -->
+    <path
+        android:pathData="M48,96 L34,88 L40,76 L54,84 Z"
+        android:fillColor="#CBD5E1"
+        android:strokeColor="#0F172A"
+        android:strokeWidth="1.8" />
+    <!-- Wide Bristles -->
+    <path
+        android:pathData="M34,88 L14,76 L24,60 L40,76 Z"
+        android:fillColor="#0F172A" />
+
+    <!-- 3. PAINT ROLLER (Pointing to Top-Right) -->
+    <!-- Steel Arm Wire Frame -->
+    <path
+        android:pathData="M136,112 L128,76 L154,60 L166,92"
+        android:strokeColor="#0F172A"
+        android:strokeWidth="5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:fillColor="#00000000" />
+    <!-- Foam / Fiber Roller Cylinder -->
+    <path
+        android:pathData="M142,56 L192,86 L182,102 L132,72 Z"
+        android:fillColor="#0F172A" />
+    <!-- Roller Core Caps -->
+    <path
+        android:pathData="M132,72 A8,8 0 1,1 142,56"
+        android:fillColor="#64748B"
+        android:strokeColor="#0F172A"
+        android:strokeWidth="1.5" />
+    <path
+        android:pathData="M182,102 A8,8 0 1,1 192,86"
+        android:fillColor="#64748B"
+        android:strokeColor="#0F172A"
+        android:strokeWidth="1.5" />
+
+    <!-- 4. POWERFUL RAISED CLENCHED FIST IN CENTER (Black Silhouette with White Accents) -->
+    <!-- Muscular Forearm -->
+    <path
+        android:pathData="M106,188 L144,188 L148,142 L102,142 Z"
+        android:fillColor="#0F172A" />
+    <!-- Forearm Muscle Highlight -->
+    <path
+        android:pathData="M120,146 L116,186 M130,146 L134,186"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round" />
+
+    <!-- Solid Fist Palm Base -->
+    <path
+        android:pathData="M92,142 L158,142 L164,108 L132,84 L90,108 Z"
+        android:fillColor="#0F172A" />
+    
+    <!-- Firm Thumb Crossed Over Fingers -->
+    <path
+        android:pathData="M88,110 C108,114 136,104 142,92 L134,84 C116,96 98,102 88,110 Z"
+        android:fillColor="#0F172A"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.8" />
+    
+    <!-- Finger Knuckles White Separation Lines -->
+    <path
+        android:pathData="M112,86 L118,106 M128,88 L134,108 M144,94 L148,112 M100,98 L108,114"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2.2"
+        android:strokeLineCap="round" />
+
+    <!-- 5. BOLD CLEAR "TN PA²" INSCRIPTION BELOW FIST -->
+    <!-- Pill Plate for Text -->
+    <path
+        android:pathData="M78,198 H172 V220 H78 Z"
+        android:fillColor="#00000000" />
+    
+    <!-- T -->
+    <path android:pathData="M84,202 H96 V206 H92 V218 H88 V206 H84 Z" android:fillColor="#0F172A" />
+    <!-- N -->
+    <path android:pathData="M100,202 H104 L110,214 V202 H114 V218 H110 L104,206 V218 H100 Z" android:fillColor="#0F172A" />
+    <!-- P -->
+    <path android:pathData="M122,202 H131 Q136,202 136,208 Q136,213 131,213 H126 V218 H122 Z M126,205 V210 H131 Q133,210 133,207.5 Q133,205 131,205 Z" android:fillColor="#0F172A" />
+    <!-- A -->
+    <path android:pathData="M141,218 L148,202 H152 L159,218 H155 L153,213 H147 L145,218 Z M148,210 H152 L150,204.5 Z" android:fillColor="#0F172A" />
+    <!-- ² SuperScript 2 -->
+    <path android:pathData="M162,201 H168 V203 L164.5,207 H168 V209 H162 V207 L165.5,203 H162 Z" android:fillColor="#DC141E" />
+
+</vector>

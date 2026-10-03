@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="120dp"
+    android:height="120dp"
+    android:viewportWidth="120"
+    android:viewportHeight="120">
+    <!-- Outer Golden/Green Circle -->
+    <path
+        android:pathData="M60,60m-56,0a56,56 0 1,0 112,0a56,56 0 1,0 -112,0"
+        android:strokeWidth="3.5"
+        android:strokeColor="#15803D"
+        android:fillColor="#F8FAFC" />
+    <path
+        android:pathData="M60,60m-50,0a50,50 0 1,0 100,0a50,50 0 1,0 -100,0"
+        android:strokeWidth="1.5"
+        android:strokeColor="#EAB308"
+        android:fillColor="#00000000" />
+    
+    <!-- Gopuram Temple Tower Silhouette (TN Emblem style) -->
+    <!-- Base tier -->
+    <path
+        android:pathData="M38,82 L82,82 L80,74 L40,74 Z"
+        android:fillColor="#D97706" />
+    <!-- Tier 2 -->
+    <path
+        android:pathData="M42,74 L78,74 L75,64 L45,64 Z"
+        android:fillColor="#EAB308" />
+    <!-- Tier 3 -->
+    <path
+        android:pathData="M46,64 L74,64 L72,52 L48,52 Z"
+        android:fillColor="#D97706" />
+    <!-- Tier 4 -->
+    <path
+        android:pathData="M50,52 L70,52 L68,40 L52,40 Z"
+        android:fillColor="#EAB308" />
+    <!-- Gopuram Kalasams Top -->
+    <path
+        android:pathData="M54,40 L66,40 L60,26 Z"
+        android:fillColor="#B45309" />
+    <path
+        android:pathData="M59,26 L61,26 L60,20 Z"
+        android:fillColor="#F59E0B" />
+    
+    <!-- Ashoka Chakra Blue in Center Arch -->
+    <path
+        android:pathData="M60,68m-6,0a6,6 0 1,0 12,0a6,6 0 1,0 -12,0"
+        android:fillColor="#1E3A8A" />
+    <path
+        android:pathData="M60,63 L60,73 M55,68 L65,68 M56,64 L64,72 M56,72 L64,64"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="0.8" />
+
+    <!-- Garland Leaves Left & Right -->
+    <path
+        android:pathData="M24,78 Q22,46 36,32"
+        android:strokeWidth="3"
+        android:strokeColor="#15803D"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000" />
+    <path
+        android:pathData="M96,78 Q98,46 84,32"
+        android:strokeWidth="3"
+        android:strokeColor="#15803D"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000" />
+
+    <!-- Ribbon Banner Base -->
+    <path
+        android:pathData="M26,92 Q60,104 94,92 L92,86 Q60,96 28,86 Z"
+        android:fillColor="#15803D" />
+</vector>

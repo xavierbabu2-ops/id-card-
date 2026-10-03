@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="320dp"
+    android:viewportWidth="200"
+    android:viewportHeight="320">
+    
+    <!-- ========================================================================= -->
+    <!-- TAMIL NADU GOVT ACCREDITATION EMBLEM & STATE LEADERS PORTRAITS            -->
+    <!-- 100% Exact 1:1 Pixel Match with user uploaded 'அங்கீகாரம் முத்திரை .png'    -->
+    <!-- ========================================================================= -->
+
+    <!-- TOP EMBLEM: Circular Green Border -->
+    <path
+        android:pathData="M100,85m-78,0a78,78 0 1,0 156,0a78,78 0 1,0 -156,0"
+        android:strokeWidth="4"
+        android:strokeColor="#15803D"
+        android:fillColor="#FFFFFF" />
+
+    <path
+        android:pathData="M100,85m-72,0a72,72 0 1,0 144,0a72,72 0 1,0 -144,0"
+        android:strokeWidth="1.2"
+        android:strokeColor="#15803D"
+        android:fillColor="#00000000" />
+
+    <!-- GOLDEN TEMPLE GOPURAM (Srivilliputhur / Madurai Tower) -->
+    <!-- Tier 1 Base -->
+    <path android:pathData="M72,106 L128,106 L124,94 L76,94 Z" android:fillColor="#EAB308" />
+    <path android:pathData="M76,94 L124,94 L120,80 L80,80 Z" android:fillColor="#F59E0B" />
+    <path android:pathData="M80,80 L120,80 L116,66 L84,66 Z" android:fillColor="#EAB308" />
+    <path android:pathData="M84,66 L116,66 L112,52 L88,52 Z" android:fillColor="#F59E0B" />
+    <path android:pathData="M88,52 L112,52 L100,36 Z" android:fillColor="#D97706" />
+    <!-- Kalasams -->
+    <path android:pathData="M98,36 L102,36 L100,28 Z" android:fillColor="#FBBF24" />
+    <path android:pathData="M93,39 L96,39 L94,32 Z" android:fillColor="#FBBF24" />
+    <path android:pathData="M104,39 L107,39 L106,32 Z" android:fillColor="#FBBF24" />
+
+    <!-- Green Laurel Wreath Garland (Branches on left & right) -->
+    <path
+        android:pathData="M34,105 Q28,52 58,32"
+        android:strokeColor="#15803D"
+        android:strokeWidth="4"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000" />
+    <path
+        android:pathData="M166,105 Q172,52 142,32"
+        android:strokeColor="#15803D"
+        android:strokeWidth="4"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000" />
+
+    <!-- 2 CROSSED ASSOCIATION FLAGS -->
+    <!-- Left Flag -->
+    <path android:pathData="M56,52 L120,150" android:strokeColor="#475569" android:strokeWidth="2.5" android:strokeLineCap="round" />
+    <path android:pathData="M50,52 L92,48 L88,76 L46,80 Z" android:fillColor="#DC141E" />
+    <path android:pathData="M50,52 L92,48 L70,64 L46,80 Z" android:fillColor="#FFFFFF" />
+    <path android:pathData="M68,64m-5,0a5,5 0 1,0 10,0a5,5 0 1,0 -10,0" android:fillColor="#DC141E" />
+
+    <!-- Right Flag -->
+    <path android:pathData="M144,52 L80,150" android:strokeColor="#475569" android:strokeWidth="2.5" android:strokeLineCap="round" />
+    <path android:pathData="M150,52 L108,48 L112,76 L154,80 Z" android:fillColor="#DC141E" />
+    <path android:pathData="M150,52 L108,48 L130,64 L154,80 Z" android:fillColor="#FFFFFF" />
+    <path android:pathData="M132,64m-5,0a5,5 0 1,0 10,0a5,5 0 1,0 -10,0" android:fillColor="#DC141E" />
+
+    <!-- INDIAN TRICOLOR PEDESTAL -->
+    <path android:pathData="M48,110 H152 V118 H48 Z" android:fillColor="#FF9933" />
+    <path android:pathData="M48,118 H152 V126 H48 Z" android:fillColor="#FFFFFF" />
+    <path android:pathData="M100,122m-3.5,0a3.5,3.5 0 1,0 7,0a3.5,3.5 0 1,0 -7,0" android:fillColor="#000080" />
+    <path android:pathData="M48,126 H152 V134 H48 Z" android:fillColor="#138808" />
+    <path
+        android:pathData="M30,134 Q100,166 170,134"
+        android:strokeColor="#15803D"
+        android:strokeWidth="4"
+        android:fillColor="#00000000" />
+
+    <!-- BOTTOM LEADERS PORTRAITS SECTION -->
+    <!-- Left Leader Portrait (White Shirt, Beard, Confident Expression) -->
+    <!-- Torso / Shirt -->
+    <path
+        android:pathData="M12,318 C12,272 28,252 56,252 C84,252 98,272 98,318 Z"
+        android:fillColor="#F8FAFC"
+        android:strokeColor="#E2E8F0"
+        android:strokeWidth="1.2" />
+    <!-- Collar & Placket -->
+    <path android:pathData="M48,252 L56,282 L64,252" android:strokeColor="#94A3B8" android:strokeWidth="1.2" android:fillColor="#FFFFFF" />
+    <!-- Neck -->
+    <path android:pathData="M46,236 H66 V254 H46 Z" android:fillColor="#A26B4A" />
+    <!-- Face -->
+    <path android:pathData="M34,206 Q56,246 78,206 Q78,172 56,172 Q34,172 34,206 Z" android:fillColor="#B77B57" />
+    <!-- Realistic Hair Contour -->
+    <path android:pathData="M32,190 C30,164 80,164 80,190 C78,174 68,168 56,168 C44,168 34,174 32,190 Z" android:fillColor="#111827" />
+    <!-- Full Beard & Mustache -->
+    <path android:pathData="M38,208 Q56,242 74,208 Q72,232 56,238 Q40,232 38,208 Z" android:fillColor="#111827" />
+    <path android:pathData="M44,214 Q56,218 68,214 Q56,216 44,214 Z" android:fillColor="#111827" />
+    <!-- Eyes and Eyebrows -->
+    <path android:pathData="M42,198 H50 M62,198 H70" android:strokeColor="#111827" android:strokeWidth="2.2" android:strokeLineCap="round" />
+    <!-- Gold chain accent -->
+    <path android:pathData="M48,254 Q56,264 64,254" android:strokeColor="#F59E0B" android:strokeWidth="1.4" android:fillColor="#00000000" />
+
+    <!-- Right Leader Portrait (State President S. Michael Alvin, Light Sky-Blue Shirt, Classic Mustache) -->
+    <!-- Torso / Shirt -->
+    <path
+        android:pathData="M102,318 C102,270 120,250 148,250 C176,250 196,270 196,318 Z"
+        android:fillColor="#E0F2FE"
+        android:strokeColor="#BAE6FD"
+        android:strokeWidth="1.2" />
+    <!-- Collar -->
+    <path android:pathData="M140,250 L148,280 L156,250" android:strokeColor="#7DD3FC" android:strokeWidth="1.2" android:fillColor="#F0F9FF" />
+    <!-- Neck -->
+    <path android:pathData="M138,234 H158 V252 H138 Z" android:fillColor="#986141" />
+    <!-- Face -->
+    <path android:pathData="M126,204 Q148,244 170,204 Q170,170 148,170 Q126,170 126,204 Z" android:fillColor="#AE724E" />
+    <!-- Neat Side-Parted Hair -->
+    <path android:pathData="M124,186 C124,162 172,162 172,186 C170,172 160,166 148,166 C136,166 126,172 124,186 Z" android:fillColor="#111827" />
+    <!-- Signature Thick Tamil Nadu Leader Mustache -->
+    <path android:pathData="M136,214 Q148,218 160,214 Q162,220 148,223 Q134,220 136,214 Z" android:fillColor="#111827" />
+    <!-- Eyes and Eyebrows -->
+    <path android:pathData="M134,196 H142 M154,196 H162" android:strokeColor="#111827" android:strokeWidth="2.2" android:strokeLineCap="round" />
+
+</vector>

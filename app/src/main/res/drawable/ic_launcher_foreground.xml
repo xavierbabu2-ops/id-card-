@@ -1,0 +1,63 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    
+    <!-- ID Card Base inside 66dp safe zone (21 to 87) -->
+    <!-- Card Body -->
+    <path
+        android:pathData="M28,32 H80 A5,5 0 0,1 85,37 V73 A5,5 0 0,1 80,78 H28 A5,5 0 0,1 23,73 V37 A5,5 0 0,1 28,32 Z"
+        android:fillColor="#FFFFFF" />
+    
+    <!-- Card Top Banner Header (Union Red) -->
+    <path
+        android:pathData="M28,32 H80 A5,5 0 0,1 85,37 V43 H23 V37 A5,5 0 0,1 28,32 Z"
+        android:fillColor="#D3121B" />
+
+    <!-- Card Photo Box -->
+    <path
+        android:pathData="M29,48 H43 V65 H29 Z"
+        android:fillColor="#F1F5F9"
+        android:strokeColor="#CBD5E1"
+        android:strokeWidth="1" />
+    
+    <!-- Photo Silhouette -->
+    <path
+        android:pathData="M36,52 A3,3 0 1,0 36,58 A3,3 0 1,0 36,52 Z M31,64 C31,60.5 33,59.5 36,59.5 C39,59.5 41,60.5 41,64 Z"
+        android:fillColor="#94A3B8" />
+
+    <!-- Card Data Lines -->
+    <path
+        android:pathData="M48,49 H78 M48,55 H72 M48,61 H68"
+        android:strokeColor="#1E293B"
+        android:strokeWidth="2"
+        android:strokeLineCap="round" />
+
+    <!-- Lanyard Clip Notch at top -->
+    <path
+        android:pathData="M50,27 H58 V33 H50 Z"
+        android:fillColor="#FFD700" />
+    <path
+        android:pathData="M51,24 H57 V28 H51 Z"
+        android:fillColor="#78350F" />
+
+    <!-- Crossed Paint Brush on bottom right badge -->
+    <path
+        android:pathData="M64,82 L76,68 L80,72 L68,86 Z"
+        android:fillColor="#E2E8F0"
+        android:strokeColor="#64748B"
+        android:strokeWidth="0.8" />
+    <path
+        android:pathData="M76,68 L81,62 L85,66 L80,72 Z"
+        android:fillColor="#FFD700" />
+    <path
+        android:pathData="M81,62 L85,57 C86.5,55 89,57 87,60 L85,66 Z"
+        android:fillColor="#D3121B" />
+
+    <!-- Golden Star Emblem -->
+    <path
+        android:pathData="M78,40 L79,42.5 L81.5,43 L79.5,44.8 L80,47.5 L78,46 L76,47.5 L76.5,44.8 L74.5,43 L77,42.5 Z"
+        android:fillColor="#FFD700" />
+
+</vector>

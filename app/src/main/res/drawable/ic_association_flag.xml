@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="200"
+    android:viewportHeight="200">
+    
+    <!-- ========================================================================= -->
+    <!-- OFFICIAL TNPA² WAVING FLAG - 1:1 Match with user uploaded image           -->
+    <!-- ========================================================================= -->
+
+    <!-- Chrome Flagpole on Right -->
+    <path
+        android:pathData="M182,10 V195"
+        android:strokeColor="#94A3B8"
+        android:strokeWidth="5"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M180,10 V195"
+        android:strokeColor="#E2E8F0"
+        android:strokeWidth="1.8" />
+    
+    <!-- Flagpole Top Sphere Finial -->
+    <path
+        android:pathData="M182,10m-6,0a6,6 0 1,0 12,0a6,6 0 1,0 -12,0"
+        android:fillColor="#E2E8F0"
+        android:strokeColor="#64748B"
+        android:strokeWidth="1" />
+
+    <!-- Waving Flag Cloth - Top Right Half (Red) -->
+    <path
+        android:pathData="M180,24 C140,30 90,12 40,40 C34,44 26,46 22,50 C18,72 26,88 28,110 C20,124 24,136 28,144 C60,132 120,130 180,120 Z"
+        android:fillColor="#DC141E" />
+
+    <!-- Waving Flag Cloth - Bottom Left Half (White with Ripple Folds) -->
+    <path
+        android:pathData="M180,120 C120,130 60,132 28,144 C24,136 20,124 28,110 C26,88 18,72 22,50 C70,90 120,80 180,120 Z"
+        android:fillColor="#F8FAFC"
+        android:strokeColor="#E2E8F0"
+        android:strokeWidth="0.8" />
+
+    <!-- Central Round TNPA² Gold Bordered Seal on Flag -->
+    <path
+        android:pathData="M102,82m-28,0a28,28 0 1,0 56,0a28,28 0 1,0 -56,0"
+        android:fillColor="#FFFFFF"
+        android:strokeColor="#B45309"
+        android:strokeWidth="2.5" />
+    
+    <path
+        android:pathData="M102,82m-25,0a25,25 0 1,0 50,0a25,25 0 1,0 -50,0"
+        android:strokeColor="#D97706"
+        android:strokeWidth="1.2"
+        android:fillColor="#00000000" />
+
+    <!-- Raised Fist in Center of Flag Logo -->
+    <path
+        android:pathData="M98,96 L108,96 L110,82 L96,82 Z"
+        android:fillColor="#111827" />
+    <path
+        android:pathData="M92,82 L112,82 L114,72 L104,64 L90,72 Z"
+        android:fillColor="#111827" />
+
+    <!-- Paint Tools in Fist on Flag -->
+    <path android:pathData="M96,70 L84,58 L88,54 L100,66 Z" android:fillColor="#111827" />
+    <path android:pathData="M84,58 L78,52 L82,48 L88,54 Z" android:fillColor="#DC141E" />
+    <path android:pathData="M104,68 L100,54 L114,48 L118,62" android:strokeColor="#111827" android:strokeWidth="2" android:strokeLineCap="round" android:fillColor="#00000000" />
+    <path android:pathData="M110,48 L126,58 L122,64 L106,54 Z" android:fillColor="#111827" />
+
+    <!-- TNPA² Inscription on Flag Badge -->
+    <path
+        android:pathData="M90,98 H114"
+        android:strokeColor="#111827"
+        android:strokeWidth="1.8" />
+
+</vector>

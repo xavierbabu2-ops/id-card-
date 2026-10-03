@@ -1,0 +1,6 @@
+{
+  "name": "TN Painters ID Card",
+  "description": "ID Card Generator and Member Registry for Tamil Nadu Painters & Artists Welfare Association (தமிழ்நாடு பெயிண்டர்கள் மற்றும் ஓவியர்கள் முன்னேற்ற சங்கம்)",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
