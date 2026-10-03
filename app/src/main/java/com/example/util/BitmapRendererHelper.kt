@@ -45,17 +45,42 @@ object BitmapRendererHelper {
 
         // Draw Left and Right Official Association Logos on Header & Center Watermark
         try {
-            val logoDrawable = androidx.core.content.ContextCompat.getDrawable(context, R.drawable.ic_association_logo)
-            if (logoDrawable != null) {
-                val logoSize = 150
-                val logoBmp = Bitmap.createBitmap(logoSize, logoSize, Bitmap.Config.ARGB_8888)
-                val logoCanvas = Canvas(logoBmp)
-                logoDrawable.setBounds(0, 0, logoSize, logoSize)
-                logoDrawable.draw(logoCanvas)
+            val logoSize = 150
+            var logoBmp: Bitmap? = null
 
-                // Left Logo
+            // Try loading user's custom logo first if available
+            if (!card.customLogoUri.isNullOrBlank()) {
+                try {
+                    val uri = Uri.parse(card.customLogoUri)
+                    val input = context.contentResolver.openInputStream(uri)
+                    if (input != null) {
+                        val decoded = BitmapFactory.decodeStream(input)
+                        input.close()
+                        if (decoded != null) {
+                            logoBmp = getCircularCroppedBitmap(decoded, logoSize)
+                        }
+                    }
+                } catch (ex: Exception) {
+                    ex.printStackTrace()
+                }
+            }
+
+            // Fallback to official default association logo
+            if (logoBmp == null) {
+                val logoDrawable = androidx.core.content.ContextCompat.getDrawable(context, R.drawable.ic_association_logo)
+                if (logoDrawable != null) {
+                    val bmp = Bitmap.createBitmap(logoSize, logoSize, Bitmap.Config.ARGB_8888)
+                    val logoCanvas = Canvas(bmp)
+                    logoDrawable.setBounds(0, 0, logoSize, logoSize)
+                    logoDrawable.draw(logoCanvas)
+                    logoBmp = getCircularCroppedBitmap(bmp, logoSize)
+                }
+            }
+
+            if (logoBmp != null) {
+                // Left Logo on Header
                 canvas.drawBitmap(logoBmp, 20f, 23f, null)
-                // Right Logo
+                // Right Logo on Header
                 canvas.drawBitmap(logoBmp, (width - 170).toFloat(), 23f, null)
 
                 // Center Watermark in Body
@@ -204,36 +229,40 @@ object BitmapRendererHelper {
             }
 
         } else {
-            // BACK SIDE: 4 Exact Labels (Fully visible without cutoff)
+            // BACK SIDE: 4 Exact Labels (Fully visible without cutoff and NO overlap with QR)
+            val backStartY = headerHeight + 52f
+            val backLineGap = 66f
+            var curY = backStartY
+
             // Row 1: தந்தை பெயர்
-            canvas.drawText("தந்தை பெயர்", labelX, startY, labelPaint)
-            canvas.drawText(" : ", 340f, startY, labelPaint)
-            canvas.drawText(card.fatherName.ifBlank { "முத்துசாமி" }, 380f, startY, valuePaint)
+            canvas.drawText("தந்தை பெயர்", labelX, curY, labelPaint)
+            canvas.drawText(" : ", 340f, curY, labelPaint)
+            canvas.drawText(card.fatherName.ifBlank { "முத்துசாமி" }, 380f, curY, valuePaint)
 
             // Row 2: வயது
-            startY += lineGap
-            canvas.drawText("வயது", labelX, startY, labelPaint)
-            canvas.drawText(" : ", 340f, startY, labelPaint)
-            canvas.drawText(card.age.ifBlank { "34" }, 380f, startY, valuePaint)
+            curY += backLineGap
+            canvas.drawText("வயது", labelX, curY, labelPaint)
+            canvas.drawText(" : ", 340f, curY, labelPaint)
+            canvas.drawText(card.age.ifBlank { "34" }, 380f, curY, valuePaint)
 
             // Row 3: ரத்த வகை
-            startY += lineGap
-            canvas.drawText("ரத்த வகை", labelX, startY, labelPaint)
-            canvas.drawText(" : ", 340f, startY, labelPaint)
-            canvas.drawText(card.bloodGroup.ifBlank { "O +ve" }, 380f, startY, valuePaint)
+            curY += backLineGap
+            canvas.drawText("ரத்த வகை", labelX, curY, labelPaint)
+            canvas.drawText(" : ", 340f, curY, labelPaint)
+            canvas.drawText(card.bloodGroup.ifBlank { "O +ve" }, 380f, curY, valuePaint)
 
             // Row 4: இருப்பிடம்
-            startY += lineGap
-            canvas.drawText("இருப்பிடம்", labelX, startY, labelPaint)
-            canvas.drawText(" : ", 340f, startY, labelPaint)
+            curY += backLineGap
+            canvas.drawText("இருப்பிடம்", labelX, curY, labelPaint)
+            canvas.drawText(" : ", 340f, curY, labelPaint)
             val address = card.address.ifBlank { "1/14 அம்பலக்காரன் பட்டி, மதுரை" }
             if (address.length > 25) {
                 val line1 = address.take(25)
                 val line2 = address.drop(25)
-                canvas.drawText(line1, 380f, startY, valuePaint)
-                canvas.drawText(line2, 380f, startY + 40f, valuePaint)
+                canvas.drawText(line1, 380f, curY, valuePaint)
+                canvas.drawText(line2, 380f, curY + 36f, valuePaint)
             } else {
-                canvas.drawText(address, 380f, startY, valuePaint)
+                canvas.drawText(address, 380f, curY, valuePaint)
             }
 
             // Right Accreditation & Leaders text
@@ -334,5 +363,33 @@ object BitmapRendererHelper {
         }
 
         return bitmap
+    }
+
+    private fun getCircularCroppedBitmap(bitmap: Bitmap, size: Int): Bitmap {
+        val output = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(output)
+        val paint = Paint().apply {
+            isAntiAlias = true
+            isFilterBitmap = true
+        }
+
+        // Clean white circular base
+        paint.color = Color.WHITE
+        canvas.drawCircle(size / 2f, size / 2f, size / 2f, paint)
+
+        val minEdge = minOf(bitmap.width, bitmap.height)
+        val srcRect = Rect(
+            (bitmap.width - minEdge) / 2,
+            (bitmap.height - minEdge) / 2,
+            (bitmap.width + minEdge) / 2,
+            (bitmap.height + minEdge) / 2
+        )
+        val dstRect = Rect(0, 0, size, size)
+
+        paint.xfermode = android.graphics.PorterDuffXfermode(android.graphics.PorterDuff.Mode.SRC_IN)
+        canvas.drawBitmap(bitmap, srcRect, dstRect, paint)
+        paint.xfermode = null
+
+        return output
     }
 }
