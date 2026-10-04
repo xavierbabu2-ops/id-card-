@@ -83,16 +83,7 @@ import com.example.ui.theme.UnionNavy
 import com.example.ui.theme.UnionRed
 import com.example.util.DistrictCodeHelper
 
-val TAMIL_NADU_DISTRICTS = listOf(
-    "மதுரை", "சென்னை", "கோயம்புத்தூர்",
-    "திருச்சி", "சேலம்", "திண்டுக்கல்",
-    "திருநெல்வேலி", "தஞ்சாவூர்", "ஈரோடு",
-    "திருப்பூர்", "வேலூர்", "விருதுநகர்",
-    "சிவகங்கை", "தேனி", "ராமநாதபுரம்",
-    "புதுக்கோட்டை", "கரூர்", "நாமக்கல்",
-    "கன்னியாகுமரி", "தூத்துக்குடி", "கடலூர்",
-    "காஞ்சிபுரம்", "செங்கல்பட்டு", "கள்ளக்குறிச்சி", "விழுப்புரம்"
-)
+val TAMIL_NADU_DISTRICTS = DistrictCodeHelper.ALL_38_DISTRICTS
 
 val PAINTER_TRADES = listOf(
     "வண்ணப் பூச்சாளர் (Wall Painter)",
@@ -123,6 +114,7 @@ val EXECUTIVE_POSTS = listOf(
 @Composable
 fun CardFormEditor(
     card: MemberCardEntity,
+    existingCards: List<MemberCardEntity> = emptyList(),
     onCardChange: (MemberCardEntity) -> Unit,
     onSave: () -> Unit,
     onReset: () -> Unit,
@@ -330,7 +322,7 @@ fun CardFormEditor(
                 FilterChip(
                     selected = card.cardType == "MEMBER",
                     onClick = {
-                        val newId = DistrictCodeHelper.generateDistrictMemberId(card.district, "MEMBER")
+                        val newId = DistrictCodeHelper.getNextMemberIdForDistrict(card.district, "MEMBER", existingCards)
                         onCardChange(card.copy(cardType = "MEMBER", memberId = newId, themeColorHex = "#D3121B"))
                     },
                     label = { Text("உறுப்பினர் (Member)", fontSize = 12.sp, fontWeight = FontWeight.Bold) },
@@ -347,7 +339,7 @@ fun CardFormEditor(
                 FilterChip(
                     selected = card.cardType == "EXECUTIVE",
                     onClick = {
-                        val newId = DistrictCodeHelper.generateDistrictMemberId(card.district, "EXECUTIVE")
+                        val newId = DistrictCodeHelper.getNextMemberIdForDistrict(card.district, "EXECUTIVE", existingCards)
                         onCardChange(card.copy(cardType = "EXECUTIVE", memberId = newId, themeColorHex = "#D3121B"))
                     },
                     label = { Text("பொறுப்பாளர் (Executive)", fontSize = 12.sp, fontWeight = FontWeight.Bold) },
@@ -364,7 +356,7 @@ fun CardFormEditor(
                 FilterChip(
                     selected = card.cardType == "CONTRACTOR",
                     onClick = {
-                        val newId = DistrictCodeHelper.generateDistrictMemberId(card.district, "CONTRACTOR")
+                        val newId = DistrictCodeHelper.getNextMemberIdForDistrict(card.district, "CONTRACTOR", existingCards)
                         onCardChange(card.copy(cardType = "CONTRACTOR", memberId = newId, themeColorHex = "#B45309"))
                     },
                     label = { Text("ஒப்பந்ததாரர் (Contractor)", fontSize = 12.sp, fontWeight = FontWeight.Bold) },
@@ -486,23 +478,23 @@ fun CardFormEditor(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Identification Number (Auto District-Coded)
+            // Identification Number (Auto District-Coded starting from 0001)
             OutlinedTextField(
                 value = card.memberId,
                 onValueChange = { onCardChange(card.copy(memberId = it)) },
                 label = {
                     Text(
                         when (card.cardType) {
-                            "EXECUTIVE" -> "பொறுப்பாளர் எண் (Auto District Code: TN-EXEC-DIST-XXXX)"
-                            "CONTRACTOR" -> "ஒப்பந்ததாரர் எண் (Auto District Code: TN-CON-DIST-XXXX)"
-                            else -> "உறுப்பினர் எண் (Auto District Code: TN-DIST-XXXX)"
+                            "EXECUTIVE" -> "பொறுப்பாளர் எண் (38 மாவட்ட குறியீடு: TN-EXEC-DIST-0001)"
+                            "CONTRACTOR" -> "ஒப்பந்ததாரர் எண் (38 மாவட்ட குறியீடு: TN-CON-DIST-0001)"
+                            else -> "உறுப்பினர் எண் (38 மாவட்ட குறியீடு: TN-DIST-0001)"
                         }
                     )
                 },
                 leadingIcon = { Icon(Icons.Default.Badge, contentDescription = null, tint = UnionRed) },
                 trailingIcon = {
                     IconButton(onClick = {
-                        val newId = DistrictCodeHelper.generateDistrictMemberId(card.district, card.cardType)
+                        val newId = DistrictCodeHelper.getNextMemberIdForDistrict(card.district, card.cardType, existingCards)
                         onCardChange(card.copy(memberId = newId))
                     }) {
                         Icon(Icons.Default.AutoAwesome, contentDescription = "Regenerate", tint = UnionAmber)
@@ -517,6 +509,28 @@ fun CardFormEditor(
                     focusedLabelColor = UnionRed
                 )
             )
+
+            // 38 District Indicator Bar
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 4.dp, start = 4.dp, end = 4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "38 மாவட்ட குறியீடு: ${DistrictCodeHelper.getDistrictCode(card.district)}",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF64748B)
+                )
+                Text(
+                    text = "ஆரம்ப எண்: TN-${DistrictCodeHelper.getDistrictCode(card.district)}-0001",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = UnionRed
+                )
+            }
 
             Spacer(modifier = Modifier.height(10.dp))
 
@@ -689,10 +703,33 @@ fun CardFormEditor(
                     onDismissRequest = { districtExpanded = false }
                 ) {
                     TAMIL_NADU_DISTRICTS.forEach { dist ->
+                        val code = DistrictCodeHelper.getDistrictCode(dist)
+                        val nextId = DistrictCodeHelper.getNextMemberIdForDistrict(dist, card.cardType, existingCards)
                         DropdownMenuItem(
-                            text = { Text(dist) },
+                            text = {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(dist, fontWeight = FontWeight.SemiBold)
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Box(
+                                            modifier = Modifier
+                                                .clip(RoundedCornerShape(4.dp))
+                                                .background(UnionNavy)
+                                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                                        ) {
+                                            Text(code, color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                        }
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(nextId, fontSize = 10.sp, color = UnionRed, fontWeight = FontWeight.Bold)
+                                    }
+                                }
+                            },
                             onClick = {
-                                val updatedMemberId = DistrictCodeHelper.generateDistrictMemberId(dist, card.cardType)
+                                val updatedMemberId = DistrictCodeHelper.getNextMemberIdForDistrict(dist, card.cardType, existingCards)
                                 onCardChange(card.copy(district = dist, memberId = updatedMemberId))
                                 districtExpanded = false
                             }

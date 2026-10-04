@@ -154,18 +154,29 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun applyAadhaarExtractedCard(updatedCard: MemberCardEntity) {
+        val district = if (_aadhaarAutoTamil.value) {
+            TamilAadhaarTransliterationHelper.translateDistrictToTamil(updatedCard.district)
+        } else {
+            updatedCard.district
+        }
+        val nextMemberId = DistrictCodeHelper.getNextMemberIdForDistrict(district, updatedCard.cardType, allCards.value)
+
         val finalCard = if (_aadhaarAutoTamil.value) {
             updatedCard.copy(
+                memberId = nextMemberId,
                 name = TamilAadhaarTransliterationHelper.transliterateNameToTamil(updatedCard.name),
                 fatherName = TamilAadhaarTransliterationHelper.transliterateNameToTamil(updatedCard.fatherName),
-                district = TamilAadhaarTransliterationHelper.translateDistrictToTamil(updatedCard.district),
+                district = district,
                 address = TamilAadhaarTransliterationHelper.convertAddressToTamil(updatedCard.address)
             )
         } else {
-            updatedCard
+            updatedCard.copy(
+                memberId = nextMemberId,
+                district = district
+            )
         }
         _currentCard.value = finalCard
-        _snackbarMessage.value = "ஆதார் விபரம் & புதிய அடையாள எண் ${finalCard.memberId} தானாக பூர்த்தி செய்யப்பட்டது!"
+        _snackbarMessage.value = "ஆதார் விவரங்கள் படிவத்தில் தானாக நிரப்பப்பட்டது! புதிய அடையாள எண்: $nextMemberId"
     }
 
     fun setCardFace(face: CardFace) {

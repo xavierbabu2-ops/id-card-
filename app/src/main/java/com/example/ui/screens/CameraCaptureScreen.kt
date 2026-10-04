@@ -25,6 +25,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -199,8 +200,10 @@ fun CameraCaptureScreen(
                         } else {
                             result
                         }
-                        extractedOcrResult = finalResult
-                        Toast.makeText(context, "ஆதார் அட்டை விவரங்கள் வெற்றிகரமாகப் பெறப்பட்டது!", Toast.LENGTH_SHORT).show()
+                        val updatedCard = AadhaarOcrParser.applyToMemberCard(currentCard, finalResult)
+                        onAadhaarScanned(updatedCard)
+                        Toast.makeText(context, "ஆதார் அட்டை விவரங்கள் படிவத்தில் தானாக நிரப்பப்பட்டது!", Toast.LENGTH_LONG).show()
+                        onClose()
                     } else {
                         Toast.makeText(context, "படத்தில் எழுத்துக்கள் தெளிவாக இல்லை. மீண்டும் படம் தேர்வு செய்யவும்.", Toast.LENGTH_LONG).show()
                     }
@@ -657,8 +660,10 @@ fun CameraCaptureScreen(
                                                         } else {
                                                             ocrResult
                                                         }
-                                                        extractedOcrResult = finalResult
-                                                        Toast.makeText(context, "ஆதார் கார்டு விவரங்கள் பெறப்பட்டது!", Toast.LENGTH_SHORT).show()
+                                                        val updatedCard = AadhaarOcrParser.applyToMemberCard(currentCard, finalResult)
+                                                        onAadhaarScanned(updatedCard)
+                                                        Toast.makeText(context, "ஆதார் விவரங்கள் படிவத்தில் தானாக நிரப்பப்பட்டது!", Toast.LENGTH_LONG).show()
+                                                        onClose()
                                                     } else {
                                                         Toast.makeText(context, "படத்தில் எழுத்துக்கள் தெளிவாக இல்லை. மீண்டும் நேராகப் படம் எடுக்கவும்.", Toast.LENGTH_LONG).show()
                                                     }
@@ -694,12 +699,16 @@ fun CameraCaptureScreen(
                                 isProcessing = true
                                 processingMessage = "ஆதார் மாதிரி தரவு ஸ்கேன் செய்யப்படுகிறது..."
                                 scope.launch {
-                                    delay(600)
-                                    extractedOcrResult = AadhaarOcrParser.parseAadhaarText(
+                                    delay(400)
+                                    val parsed = AadhaarOcrParser.parseAadhaarText(
                                         "தமிழ்நாடு அரசு\nக. மாரிமுத்து\nDOB: 12/04/1988\nMale\nS/O: கந்தசாமி\n8, பாரதி தெரு, தாம்பரம், சென்னை 600045\nXXXX XXXX 2940",
                                         currentCard.cardType
                                     )
+                                    val updatedCard = AadhaarOcrParser.applyToMemberCard(currentCard, parsed)
+                                    onAadhaarScanned(updatedCard)
                                     isProcessing = false
+                                    Toast.makeText(context, "மாதிரி ஆதார் விவரங்கள் படிவத்தில் தானாக நிரப்பப்பட்டது!", Toast.LENGTH_SHORT).show()
+                                    onClose()
                                 }
                             } else {
                                 Toast.makeText(context, "கேமரா பொத்தானைத் தொட்டு படம் எடுக்கவும்", Toast.LENGTH_SHORT).show()
@@ -909,45 +918,63 @@ fun CameraCaptureScreen(
                         OcrRow("ஆதார் எண்", result.aadhaarNumber)
 
                         Spacer(modifier = Modifier.height(10.dp))
-                        Text(
-                            text = "மாவட்டம் மாற்றுக (Change District):",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF64748B)
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
                         Row(
+                            verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            listOf("மதுரை", "சென்னை", "கோவை", "திருச்சி", "சேலம்").forEach { dist ->
-                                val fullDist = when (dist) {
-                                    "கோவை" -> "கோயம்புத்தூர்"
-                                    else -> dist
-                                }
-                                val isSelected = result.district == fullDist
+                            Text(
+                                text = "38 மாவட்டம் தேர்வு (Change to any 38 District):",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF64748B)
+                            )
+                            Text(
+                                text = "ஆரம்ப எண்: 0001",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = UnionRed
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        // Scrollable 38 Districts Row with District Codes
+                        androidx.compose.foundation.lazy.LazyRow(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            items(com.example.util.DistrictCodeHelper.ALL_38_DISTRICTS) { dist ->
+                                val code = com.example.util.DistrictCodeHelper.getDistrictCode(dist)
+                                val isSelected = result.district.contains(dist, ignoreCase = true)
                                 Box(
                                     modifier = Modifier
-                                        .weight(1f)
-                                        .clip(RoundedCornerShape(6.dp))
+                                        .clip(RoundedCornerShape(8.dp))
                                         .background(if (isSelected) UnionRed else Color(0xFFF1F5F9))
                                         .clickable {
-                                            val newMemberId = com.example.util.DistrictCodeHelper.generateDistrictMemberId(fullDist, currentCard.cardType)
+                                            val newMemberId = com.example.util.DistrictCodeHelper.generateDistrictMemberId(dist, currentCard.cardType, 1)
                                             extractedOcrResult = result.copy(
-                                                district = fullDist,
+                                                district = dist,
                                                 generatedMemberId = newMemberId,
-                                                address = result.address.substringBeforeLast(",") + ", " + fullDist
+                                                address = if (result.address.contains(",")) result.address.substringBeforeLast(",") + ", " + dist else "$dist, தமிழ்நாடு"
                                             )
                                         }
-                                        .padding(vertical = 5.dp),
+                                        .padding(horizontal = 10.dp, vertical = 6.dp),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    Text(
-                                        text = dist,
-                                        fontSize = 10.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = if (isSelected) Color.White else Color(0xFF334155)
-                                    )
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Text(
+                                            text = dist,
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (isSelected) Color.White else Color(0xFF1E293B)
+                                        )
+                                        Text(
+                                            text = code,
+                                            fontSize = 9.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = if (isSelected) Color(0xFFFFE4E6) else Color(0xFF64748B)
+                                        )
+                                    }
                                 }
                             }
                         }
