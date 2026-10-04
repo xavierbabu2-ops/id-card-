@@ -69,6 +69,7 @@ import com.example.ui.theme.UnionAmber
 import com.example.ui.theme.UnionGreen
 import com.example.ui.theme.UnionNavy
 import com.example.ui.theme.UnionRed
+import com.example.util.AadhaarOcrEngine
 import com.example.util.AadhaarOcrParser
 import com.example.util.DistrictCodeHelper
 import kotlinx.coroutines.delay
@@ -107,9 +108,25 @@ fun AadhaarScannerDialog(
         if (bitmap != null) {
             isScanning = true
             scope.launch {
-                delay(1200)
-                val sample = generateSampleFromScan(currentCard.cardType, currentCard.district, currentCard.name, currentCard.address)
-                extractedData = sample
+                val ocrText = AadhaarOcrEngine.recognizeTextFromBitmap(bitmap)
+                if (ocrText.isNotBlank()) {
+                    manualAadhaarText = ocrText
+                    val parsed = AadhaarOcrParser.parseAadhaarText(ocrText, currentCard.cardType)
+                    extractedData = AadhaarExtractedData(
+                        name = parsed.name.ifBlank { currentCard.name },
+                        fatherName = parsed.fatherName.ifBlank { currentCard.fatherName },
+                        age = parsed.age.ifBlank { currentCard.age },
+                        dob = parsed.dob,
+                        gender = parsed.gender,
+                        address = parsed.address.ifBlank { currentCard.address },
+                        district = parsed.district.ifBlank { currentCard.district },
+                        aadhaarNumber = parsed.aadhaarNumber,
+                        memberId = parsed.generatedMemberId
+                    )
+                    Toast.makeText(context, "ஆதார் கார்டு தகவல்கள் வெற்றிகரமாகப் பெறப்பட்டது!", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(context, "படத்தில் எழுத்துக்கள் தெளிவாக இல்லை. மீண்டும் படம் எடுக்கவும் அல்லது கீழே தட்டச்சு செய்யவும்.", Toast.LENGTH_LONG).show()
+                }
                 isScanning = false
             }
         }
@@ -123,9 +140,25 @@ fun AadhaarScannerDialog(
             scannedImageUri = uri
             isScanning = true
             scope.launch {
-                delay(1200)
-                val sample = generateSampleFromScan(currentCard.cardType, currentCard.district, currentCard.name, currentCard.address)
-                extractedData = sample
+                val ocrText = AadhaarOcrEngine.recognizeTextFromUri(context, uri)
+                if (ocrText.isNotBlank()) {
+                    manualAadhaarText = ocrText
+                    val parsed = AadhaarOcrParser.parseAadhaarText(ocrText, currentCard.cardType)
+                    extractedData = AadhaarExtractedData(
+                        name = parsed.name.ifBlank { currentCard.name },
+                        fatherName = parsed.fatherName.ifBlank { currentCard.fatherName },
+                        age = parsed.age.ifBlank { currentCard.age },
+                        dob = parsed.dob,
+                        gender = parsed.gender,
+                        address = parsed.address.ifBlank { currentCard.address },
+                        district = parsed.district.ifBlank { currentCard.district },
+                        aadhaarNumber = parsed.aadhaarNumber,
+                        memberId = parsed.generatedMemberId
+                    )
+                    Toast.makeText(context, "ஆதார் கார்டு தகவல்கள் பெறப்பட்டது!", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(context, "படத்தில் உள்ள எழுத்துக்கள் தெளிவாக இல்லை. மீண்டும் படம் தேர்வு செய்யவும்.", Toast.LENGTH_LONG).show()
+                }
                 isScanning = false
             }
         }
@@ -288,13 +321,13 @@ fun AadhaarScannerDialog(
                                 if (manualAadhaarText.isNotBlank()) {
                                     val parsed = AadhaarOcrParser.parseAadhaarText(manualAadhaarText, currentCard.cardType)
                                     extractedData = AadhaarExtractedData(
-                                        name = parsed.name,
-                                        fatherName = parsed.fatherName,
-                                        age = parsed.age,
+                                        name = parsed.name.ifBlank { currentCard.name },
+                                        fatherName = parsed.fatherName.ifBlank { currentCard.fatherName },
+                                        age = parsed.age.ifBlank { currentCard.age },
                                         dob = parsed.dob,
                                         gender = parsed.gender,
-                                        address = parsed.address,
-                                        district = parsed.district,
+                                        address = parsed.address.ifBlank { manualAadhaarText.trim() },
+                                        district = parsed.district.ifBlank { currentCard.district },
                                         aadhaarNumber = parsed.aadhaarNumber,
                                         memberId = parsed.generatedMemberId
                                     )
@@ -336,8 +369,18 @@ fun AadhaarScannerDialog(
                                     .clickable {
                                         isScanning = true
                                         scope.launch {
-                                            delay(500)
-                                            extractedData = generateSampleFromScan(currentCard.cardType, dist, sampleName, sampleAddr)
+                                            delay(300)
+                                            extractedData = AadhaarExtractedData(
+                                                name = sampleName,
+                                                fatherName = currentCard.fatherName.ifBlank { "முத்துசாமி" },
+                                                age = currentCard.age.ifBlank { "34" },
+                                                dob = "15/06/1990",
+                                                gender = "ஆண் (Male)",
+                                                address = sampleAddr,
+                                                district = dist,
+                                                aadhaarNumber = "XXXX XXXX " + (1000..9999).random(),
+                                                memberId = DistrictCodeHelper.generateDistrictMemberId(dist, currentCard.cardType)
+                                            )
                                             isScanning = false
                                         }
                                     },
@@ -522,26 +565,4 @@ fun AadhaarScannerDialog(
             }
         }
     }
-}
-
-private fun generateSampleFromScan(
-    cardType: String,
-    district: String,
-    name: String = "மு. கார்த்திகேயன்",
-    address: String = "12, காந்தி ரோடு, தியாகராய நகர்"
-): AadhaarExtractedData {
-    val memberId = DistrictCodeHelper.generateDistrictMemberId(district, cardType)
-    val randomAadhaar = "XXXX XXXX " + (1000..9999).random()
-
-    return AadhaarExtractedData(
-        name = name,
-        fatherName = "முத்துசாமி",
-        age = "34",
-        dob = "15/06/1990",
-        gender = "ஆண் (Male)",
-        address = if (address.contains(district)) address else "$address, $district",
-        district = district,
-        aadhaarNumber = randomAadhaar,
-        memberId = memberId
-    )
 }

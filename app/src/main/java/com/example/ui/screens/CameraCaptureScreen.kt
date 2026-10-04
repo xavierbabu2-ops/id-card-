@@ -100,6 +100,7 @@ import com.example.ui.theme.UnionAmber
 import com.example.ui.theme.UnionGreen
 import com.example.ui.theme.UnionNavy
 import com.example.ui.theme.UnionRed
+import com.example.util.AadhaarOcrEngine
 import com.example.util.AadhaarOcrParser
 import com.example.util.AadhaarOcrResult
 import kotlinx.coroutines.Dispatchers
@@ -161,16 +162,18 @@ fun CameraCaptureScreen(
                 Toast.makeText(context, "உறுப்பினர் படம் இணைக்கப்பட்டது!", Toast.LENGTH_SHORT).show()
                 onClose()
             } else {
-                // Aadhaar Gallery OCR
+                // Aadhaar Gallery OCR using real ML Kit Text Recognition
                 isProcessing = true
                 processingMessage = "ஆதார் கார்டு படம் ஸ்கேன் செய்யப்படுகிறது..."
                 scope.launch {
-                    delay(1000)
-                    val result = AadhaarOcrParser.parseAadhaarText(
-                        "GOVERNMENT OF INDIA\nUnique Identification Authority of India\nமு. கார்த்திகேயன்\nDOB: 15/06/1990\nMale\nS/O: முத்துசாமி\n1/14 அம்பலக்காரன் பட்டி, உத்தங்குடி, மதுரை 625107\nXXXX XXXX 4819",
-                        currentCard.cardType
-                    )
-                    extractedOcrResult = result
+                    val ocrText = AadhaarOcrEngine.recognizeTextFromUri(context, uri)
+                    if (ocrText.isNotBlank()) {
+                        val result = AadhaarOcrParser.parseAadhaarText(ocrText, currentCard.cardType)
+                        extractedOcrResult = result
+                        Toast.makeText(context, "ஆதார் அட்டை விவரங்கள் வெற்றிகரமாகப் பெறப்பட்டது!", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(context, "படத்தில் எழுத்துக்கள் தெளிவாக இல்லை. மீண்டும் படம் தேர்வு செய்யவும்.", Toast.LENGTH_LONG).show()
+                    }
                     isProcessing = false
                 }
             }
@@ -479,16 +482,38 @@ fun CameraCaptureScreen(
                                         }
                                     }
                                 } else {
-                                    // AADHAAR CARD SCAN & TEXT RECOGNITION (OCR)
-                                    processingMessage = "ஆதார் கார்டு படித்து விவரங்கள் பெறப்படுகிறது..."
-                                    scope.launch {
-                                        delay(1200) // Simulated optical OCR processing
-                                        val ocrResult = AadhaarOcrParser.parseAadhaarText(
-                                            "GOVERNMENT OF INDIA\nUnique Identification Authority of India\nமு. கார்த்திகேயன்\nDOB: 15/06/1990\nMale\nS/O: முத்துசாமி\n1/14 அம்பலக்காரன் பட்டி, உத்தங்குடி, மதுரை 625107\nXXXX XXXX 4819",
-                                            currentCard.cardType
-                                        )
-                                        extractedOcrResult = ocrResult
+                                    // AADHAAR CARD SCAN & REAL TEXT RECOGNITION (OCR)
+                                    processingMessage = "ஆதார் கார்டு படம் எடுக்கப்பட்டு விவரங்கள் பெறப்படுகிறது..."
+                                    val aadhaarFile = File(context.cacheDir, "aadhaar_${System.currentTimeMillis()}.jpg")
+                                    val outputOptions = ImageCapture.OutputFileOptions.Builder(aadhaarFile).build()
+
+                                    imageCapture?.takePicture(
+                                        outputOptions,
+                                        executor,
+                                        object : ImageCapture.OnImageSavedCallback {
+                                            override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
+                                                scope.launch {
+                                                    val uri = Uri.fromFile(aadhaarFile)
+                                                    val ocrText = AadhaarOcrEngine.recognizeTextFromUri(context, uri)
+                                                    if (ocrText.isNotBlank()) {
+                                                        val ocrResult = AadhaarOcrParser.parseAadhaarText(ocrText, currentCard.cardType)
+                                                        extractedOcrResult = ocrResult
+                                                        Toast.makeText(context, "ஆதார் கார்டு விவரங்கள் பெறப்பட்டது!", Toast.LENGTH_SHORT).show()
+                                                    } else {
+                                                        Toast.makeText(context, "படத்தில் எழுத்துக்கள் தெளிவாக இல்லை. மீண்டும் நேராகப் படம் எடுக்கவும்.", Toast.LENGTH_LONG).show()
+                                                    }
+                                                    isProcessing = false
+                                                }
+                                            }
+
+                                            override fun onError(exception: ImageCaptureException) {
+                                                isProcessing = false
+                                                Toast.makeText(context, "படம் எடுப்பதில் பிழை: ${exception.message}", Toast.LENGTH_SHORT).show()
+                                            }
+                                        }
+                                    ) ?: run {
                                         isProcessing = false
+                                        Toast.makeText(context, "கேமரா இன்னும் தயாராகவில்லை. கேலரி மூலம் ஆதார் படத்தை தேர்வு செய்யவும்.", Toast.LENGTH_LONG).show()
                                     }
                                 }
                             },

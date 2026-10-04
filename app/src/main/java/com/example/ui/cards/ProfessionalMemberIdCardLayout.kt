@@ -312,7 +312,7 @@ fun ProfessionalMemberIdCardLayout(
                                 .then(
                                     if (onNameOrAddressClick != null) Modifier.clickable { onNameOrAddressClick() } else Modifier
                                 ),
-                            verticalArrangement = Arrangement.spacedBy(4.5.dp)
+                            verticalArrangement = Arrangement.spacedBy(3.dp)
                         ) {
                             BackDetailRow(
                                 label = "தந்தை பெயர்",
@@ -502,9 +502,9 @@ private fun BackDetailRow(
             text = value,
             color = Color(0xFF111827),
             fontWeight = FontWeight.ExtraBold,
-            fontSize = 9.6.sp,
-            lineHeight = 11.5.sp,
-            maxLines = if (isAddress) 2 else 1,
+            fontSize = if (isAddress) 8.8.sp else 9.6.sp,
+            lineHeight = if (isAddress) 10.5.sp else 11.5.sp,
+            maxLines = if (isAddress) 4 else 1,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f, fill = false)
         )

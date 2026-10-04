@@ -151,13 +151,7 @@ object AadhaarOcrParser {
             }
         }
 
-        // If still blank, use user's current or meaningful district address
-        if (name.isBlank()) name = "மு. கார்த்திகேயன்"
-        if (fatherName.isBlank()) fatherName = "முத்துசாமி"
-        if (age.isBlank()) age = "34"
-        if (address.isBlank()) address = "காந்தி நகர், $district"
-        if (aadhaarNum.isBlank()) aadhaarNum = "XXXX XXXX " + (1000..9999).random()
-
+        // Generate member ID if district detected
         val generatedId = DistrictCodeHelper.generateDistrictMemberId(district, cardType)
 
         return AadhaarOcrResult(
@@ -174,17 +168,17 @@ object AadhaarOcrParser {
     }
 
     /**
-     * Converts OCR Result into an updated MemberCardEntity
+     * Converts OCR Result into an updated MemberCardEntity without overwriting non-empty fields with blank values
      */
     fun applyToMemberCard(currentCard: MemberCardEntity, result: AadhaarOcrResult): MemberCardEntity {
         return currentCard.copy(
-            memberId = result.generatedMemberId,
-            name = result.name,
-            fatherName = result.fatherName,
-            age = result.age,
-            district = result.district,
-            address = result.address,
-            aadhaarNumber = result.aadhaarNumber
+            memberId = if (result.generatedMemberId.isNotBlank()) result.generatedMemberId else currentCard.memberId,
+            name = if (result.name.isNotBlank()) result.name else currentCard.name,
+            fatherName = if (result.fatherName.isNotBlank()) result.fatherName else currentCard.fatherName,
+            age = if (result.age.isNotBlank()) result.age else currentCard.age,
+            district = if (result.district.isNotBlank()) result.district else currentCard.district,
+            address = if (result.address.isNotBlank()) result.address else currentCard.address,
+            aadhaarNumber = if (result.aadhaarNumber.isNotBlank()) result.aadhaarNumber else currentCard.aadhaarNumber
         )
     }
 }

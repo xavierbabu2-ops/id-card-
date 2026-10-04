@@ -230,8 +230,8 @@ object BitmapRendererHelper {
 
         } else {
             // BACK SIDE: 4 Exact Labels (Fully visible without cutoff and NO overlap with QR)
-            val backStartY = headerHeight + 52f
-            val backLineGap = 66f
+            val backStartY = headerHeight + 42f
+            val backLineGap = 58f
             var curY = backStartY
 
             // Row 1: தந்தை பெயர்
@@ -251,18 +251,15 @@ object BitmapRendererHelper {
             canvas.drawText(" : ", 340f, curY, labelPaint)
             canvas.drawText(card.bloodGroup.ifBlank { "O +ve" }, 380f, curY, valuePaint)
 
-            // Row 4: இருப்பிடம்
+            // Row 4: இருப்பிடம் (Smart 3 to 4 lines wrapping inside address area)
             curY += backLineGap
             canvas.drawText("இருப்பிடம்", labelX, curY, labelPaint)
             canvas.drawText(" : ", 340f, curY, labelPaint)
             val address = card.address.ifBlank { "1/14 அம்பலக்காரன் பட்டி, மதுரை" }
-            if (address.length > 25) {
-                val line1 = address.take(25)
-                val line2 = address.drop(25)
-                canvas.drawText(line1, 380f, curY, valuePaint)
-                canvas.drawText(line2, 380f, curY + 36f, valuePaint)
-            } else {
-                canvas.drawText(address, 380f, curY, valuePaint)
+            val addressLines = wrapTextIntoLines(address, maxCharsPerLine = 22, maxLines = 4)
+            val addrLineHeight = 36f
+            for ((idx, line) in addressLines.withIndex()) {
+                canvas.drawText(line, 380f, curY + (idx * addrLineHeight), valuePaint)
             }
 
             // Right Accreditation & Leaders text
@@ -391,5 +388,35 @@ object BitmapRendererHelper {
         paint.xfermode = null
 
         return output
+    }
+
+    private fun wrapTextIntoLines(text: String, maxCharsPerLine: Int, maxLines: Int = 4): List<String> {
+        val clean = text.trim()
+        if (clean.isBlank()) return listOf("")
+        if (clean.length <= maxCharsPerLine) return listOf(clean)
+
+        val result = mutableListOf<String>()
+        // Split on commas or spaces, retaining commas attached to the previous token
+        val tokens = clean.split(Regex("(?<=,)|\\s+")).filter { it.isNotBlank() }
+        var currentLine = StringBuilder()
+
+        for (token in tokens) {
+            val candidate = if (currentLine.isEmpty()) token else "$currentLine $token"
+            if (candidate.length <= maxCharsPerLine) {
+                currentLine = StringBuilder(candidate)
+            } else {
+                if (currentLine.isNotEmpty()) {
+                    result.add(currentLine.toString().trim())
+                }
+                currentLine = StringBuilder(token)
+                if (result.size >= maxLines - 1) {
+                    break
+                }
+            }
+        }
+        if (currentLine.isNotEmpty() && result.size < maxLines) {
+            result.add(currentLine.toString().trim())
+        }
+        return if (result.isEmpty()) listOf(clean) else result
     }
 }
