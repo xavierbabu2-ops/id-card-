@@ -5,9 +5,17 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-@Database(entities = [MemberCardEntity::class], version = 2, exportSchema = false)
+@Database(
+    entities = [
+        MemberCardEntity::class,
+        MemberRegistrationHistoryEntity::class
+    ],
+    version = 3,
+    exportSchema = false
+)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun memberCardDao(): MemberCardDao
+    abstract fun memberHistoryDao(): MemberRegistrationHistoryDao
 
     companion object {
         @Volatile

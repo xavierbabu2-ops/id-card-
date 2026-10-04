@@ -1,6 +1,7 @@
 package com.example.ui.screens
 
 import android.content.Context
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -20,25 +21,31 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountBalanceWallet
+import androidx.compose.material.icons.filled.AdminPanelSettings
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Flip
+import androidx.compose.material.icons.filled.HourglassTop
 import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Payment
 import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material.icons.filled.Print
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Verified
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -77,12 +84,17 @@ fun CardPreviewScreen(
     onFlip: () -> Unit,
     onEdit: () -> Unit,
     onSave: () -> Unit,
+    onOpenPayment: (() -> Unit)? = null,
+    onOpenSuperAdmin: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var showExportDialog by remember { mutableStateOf(false) }
     var isSharingPdf by remember { mutableStateOf(false) }
+    var showPendingApprovalDialog by remember { mutableStateOf(false) }
+
+    val isApproved = card.approvalStatus == "APPROVED"
 
     Column(
         modifier = modifier
@@ -91,6 +103,140 @@ fun CardPreviewScreen(
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        // SUPER ADMIN APPROVAL STATUS BANNER
+        if (!isApproved) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 12.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFBEB)),
+                border = androidx.compose.foundation.BorderStroke(1.2.dp, Color(0xFFF59E0B))
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.HourglassTop,
+                                contentDescription = null,
+                                tint = Color(0xFFB45309),
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "சூப்பர் அட்மின் ஒப்புதல் நிலுவையில் உள்ளது",
+                                fontSize = 12.5.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = Color(0xFF92400E)
+                            )
+                        }
+
+                        Text(
+                            text = "₹100 கட்டணம்",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Black,
+                            color = UnionRed
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Text(
+                        text = "7010131915 இந்த எண்ணிற்கு ₹100 பணம் செலுத்தி UTR சமர்ப்பிக்கவும். சூப்பர் அட்மின் ஒப்புதலுக்கு பிறகு மட்டுமே இந்த அடையாள அட்டை பதிவிறக்கம் செய்ய இயலும்.",
+                        fontSize = 10.5.sp,
+                        color = Color(0xFF78350F),
+                        lineHeight = 14.sp
+                    )
+
+                    if (card.utrNumber.isNotBlank()) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "சமர்ப்பிக்கப்பட்ட UTR: ${card.utrNumber} (சரிபார்ப்பு நடப்பில்)",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = UnionNavy
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        if (onOpenPayment != null) {
+                            Button(
+                                onClick = onOpenPayment,
+                                colors = ButtonDefaults.buttonColors(containerColor = UnionRed),
+                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(38.dp)
+                            ) {
+                                Icon(Icons.Default.Payment, contentDescription = null, modifier = Modifier.size(14.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("₹100 செலுத்து / UTR உள்ளிடு", fontSize = 10.5.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+
+                        if (onOpenSuperAdmin != null) {
+                            OutlinedButton(
+                                onClick = onOpenSuperAdmin,
+                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier.height(38.dp)
+                            ) {
+                                Icon(Icons.Default.AdminPanelSettings, contentDescription = null, tint = UnionNavy, modifier = Modifier.size(14.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("சூப்பர் அட்மின்", fontSize = 10.5.sp, color = UnionNavy, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            // Approved Success Banner
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 12.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFECFDF5)),
+                border = androidx.compose.foundation.BorderStroke(1.2.dp, Color(0xFF34D399))
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Verified,
+                        contentDescription = null,
+                        tint = UnionGreen,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Column {
+                        Text(
+                            text = "அதிகாரப்பூர்வமாக அங்கீகரிக்கப்பட்ட அட்டை ✅",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = Color(0xFF065F46)
+                        )
+                        Text(
+                            text = "சூப்பர் அட்மின் ஒப்புதல் அளிக்கப்பட்டு முழு பதிவிறக்க வசதி திறக்கப்பட்டுள்ளது.",
+                            fontSize = 10.5.sp,
+                            color = Color(0xFF047857)
+                        )
+                    }
+                }
+            }
+        }
+
         // Top Card Stage Frame
         Card(
             modifier = Modifier
@@ -116,11 +262,11 @@ fun CardPreviewScreen(
                             modifier = Modifier
                                 .size(8.dp)
                                 .clip(CircleShape)
-                                .background(UnionGreen)
+                                .background(if (isApproved) UnionGreen else Color(0xFFD97706))
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = "300 DPI PVC அட்டை முன்னோட்டம் (Live Preview)",
+                            text = if (isApproved) "அங்கீகரிக்கப்பட்ட PVC அட்டை" else "ஒப்புதல் நிலுவை அட்டை (Pending)",
                             fontSize = 11.5.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF475569)
@@ -198,13 +344,18 @@ fun CardPreviewScreen(
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Verified, contentDescription = null, tint = UnionGreen, modifier = Modifier.size(20.dp))
+                    Icon(
+                        imageVector = if (isApproved) Icons.Default.Verified else Icons.Default.Lock,
+                        contentDescription = null,
+                        tint = if (isApproved) UnionGreen else Color(0xFFB45309),
+                        modifier = Modifier.size(20.dp)
+                    )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = if (card.approvalStatus == "APPROVED") "அங்கீகரிக்கப்பட்டது" else "ஒப்புதல் நிலுவை",
+                        text = if (isApproved) "அங்கீகரிக்கப்பட்டது" else "ஒப்புதல் நிலுவை",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
-                        color = if (card.approvalStatus == "APPROVED") UnionGreen else Color(0xFFB45309)
+                        color = if (isApproved) UnionGreen else Color(0xFFB45309)
                     )
                 }
             }
@@ -218,9 +369,9 @@ fun CardPreviewScreen(
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .border(1.2.dp, Color(0xFFBBF7D0), RoundedCornerShape(14.dp)),
+                .border(1.2.dp, if (isApproved) Color(0xFFBBF7D0) else Color(0xFFFDE68A), RoundedCornerShape(14.dp)),
             shape = RoundedCornerShape(14.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFF0FDF4)),
+            colors = CardDefaults.cardColors(containerColor = if (isApproved) Color(0xFFF0FDF4) else Color(0xFFFFFBEB)),
             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
             Column(modifier = Modifier.padding(14.dp)) {
@@ -234,7 +385,7 @@ fun CardPreviewScreen(
                             modifier = Modifier
                                 .size(32.dp)
                                 .clip(CircleShape)
-                                .background(UnionGreen),
+                                .background(if (isApproved) UnionGreen else Color(0xFFD97706)),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(Icons.Default.Share, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
@@ -242,15 +393,15 @@ fun CardPreviewScreen(
                         Spacer(modifier = Modifier.width(8.dp))
                         Column {
                             Text(
-                                text = "நிர்வாக பகிர்வு & ஏற்றுமதி (Admin Share)",
+                                text = "அடையாள அட்டை ஏற்றுமதி & பகிர்வு (Export & Share)",
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.ExtraBold,
-                                color = Color(0xFF166534)
+                                color = if (isApproved) Color(0xFF166534) else Color(0xFF92400E)
                             )
                             Text(
-                                text = "வாட்ஸ்அப் / மெசேஜிங் ஆப்கள் & PDF நேரடி பகிர்வு",
+                                text = if (isApproved) "வாட்ஸ்அப் & PDF உயர் தெளிவுத்திறன் பகிர்வு" else "சூப்பர் அட்மின் ஒப்புதலுக்குப் பின் திறக்கப்படும்",
                                 fontSize = 10.sp,
-                                color = Color(0xFF15803D)
+                                color = if (isApproved) Color(0xFF15803D) else Color(0xFFB45309)
                             )
                         }
                     }
@@ -261,25 +412,33 @@ fun CardPreviewScreen(
                 // Action 1: Direct High-Quality PDF Share
                 Button(
                     onClick = {
-                        scope.launch {
-                            isSharingPdf = true
-                            withContext(Dispatchers.IO) {
-                                CardExporter.shareMemberCardPdfDirectly(context, card)
+                        if (!isApproved) {
+                            showPendingApprovalDialog = true
+                        } else {
+                            scope.launch {
+                                isSharingPdf = true
+                                withContext(Dispatchers.IO) {
+                                    CardExporter.shareMemberCardPdfDirectly(context, card)
+                                }
+                                isSharingPdf = false
                             }
-                            isSharingPdf = false
                         }
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = UnionNavy),
+                    colors = ButtonDefaults.buttonColors(containerColor = if (isApproved) UnionNavy else Color(0xFF64748B)),
                     shape = RoundedCornerShape(10.dp),
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(48.dp)
                         .testTag("btn_share_pdf_direct")
                 ) {
-                    Icon(Icons.Default.PictureAsPdf, contentDescription = null, modifier = Modifier.size(20.dp))
+                    Icon(
+                        imageVector = if (isApproved) Icons.Default.PictureAsPdf else Icons.Default.Lock,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = if (isSharingPdf) "PDF தயாராகிறது..." else "PDF ஆவணமாக பகிர்க (Share as High-Quality PDF)",
+                        text = if (isSharingPdf) "PDF தயாராகிறது..." else if (isApproved) "PDF ஆவணமாக பகிர்க (Share Official PDF)" else "PDF பகிர்வு (சூப்பர் அட்மின் ஒப்புதல் தேவை)",
                         fontWeight = FontWeight.Bold,
                         fontSize = 12.sp
                     )
@@ -294,18 +453,22 @@ fun CardPreviewScreen(
                 ) {
                     Button(
                         onClick = {
-                            val bmp = BitmapRendererHelper.renderCardToBitmap(
-                                context,
-                                card,
-                                isBack = (cardFace == CardFace.Back && card.cardType == "MEMBER")
-                            )
-                            CardExporter.shareCardBitmap(
-                                context,
-                                bmp,
-                                "${card.name} - ${card.memberId}"
-                            )
+                            if (!isApproved) {
+                                showPendingApprovalDialog = true
+                            } else {
+                                val bmp = BitmapRendererHelper.renderCardToBitmap(
+                                    context,
+                                    card,
+                                    isBack = (cardFace == CardFace.Back && card.cardType == "MEMBER")
+                                )
+                                CardExporter.shareCardBitmap(
+                                    context,
+                                    bmp,
+                                    "${card.name} - ${card.memberId}"
+                                )
+                            }
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = UnionGreen),
+                        colors = ButtonDefaults.buttonColors(containerColor = if (isApproved) UnionGreen else Color(0xFF64748B)),
                         shape = RoundedCornerShape(10.dp),
                         modifier = Modifier
                             .weight(1f)
@@ -320,9 +483,13 @@ fun CardPreviewScreen(
                     if (card.cardType == "MEMBER") {
                         Button(
                             onClick = {
-                                CardExporter.shareMemberCardDualSheetDirectly(context, card)
+                                if (!isApproved) {
+                                    showPendingApprovalDialog = true
+                                } else {
+                                    CardExporter.shareMemberCardDualSheetDirectly(context, card)
+                                }
                             },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF047857)),
+                            colors = ButtonDefaults.buttonColors(containerColor = if (isApproved) Color(0xFF047857) else Color(0xFF475569)),
                             shape = RoundedCornerShape(10.dp),
                             modifier = Modifier
                                 .weight(1f)
@@ -346,17 +513,31 @@ fun CardPreviewScreen(
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Button(
-                onClick = { showExportDialog = true },
-                colors = ButtonDefaults.buttonColors(containerColor = UnionRed),
+                onClick = {
+                    if (!isApproved) {
+                        showPendingApprovalDialog = true
+                    } else {
+                        showExportDialog = true
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = if (isApproved) UnionRed else Color(0xFF64748B)),
                 shape = RoundedCornerShape(10.dp),
                 modifier = Modifier
                     .weight(1f)
                     .height(46.dp)
                     .testTag("btn_download_hd")
             ) {
-                Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(18.dp))
+                Icon(
+                    imageVector = if (isApproved) Icons.Default.Download else Icons.Default.Lock,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("பதிவிறக்க மெனு (Export)", fontWeight = FontWeight.Bold, fontSize = 11.5.sp)
+                Text(
+                    text = if (isApproved) "பதிவிறக்க மெனு (Export)" else "பதிவிறக்கம் (Lock)",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 11.5.sp
+                )
             }
 
             OutlinedButton(
@@ -389,6 +570,62 @@ fun CardPreviewScreen(
         }
 
         Spacer(modifier = Modifier.height(24.dp))
+    }
+
+    // Pending Approval Warning Dialog
+    if (showPendingApprovalDialog) {
+        AlertDialog(
+            onDismissRequest = { showPendingApprovalDialog = false },
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.Lock,
+                    contentDescription = null,
+                    tint = UnionRed,
+                    modifier = Modifier.size(36.dp)
+                )
+            },
+            title = {
+                Text(
+                    text = "சூப்பர் அட்மின் ஒப்புதல் தேவை!",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Black,
+                    textAlign = TextAlign.Center
+                )
+            },
+            text = {
+                Column {
+                    Text(
+                        text = "38 மாவட்ட மற்றும் மாநில பொறுப்பாளர்கள் கவனத்திற்கு:",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF1E293B)
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "7010131915 இந்த எண்ணிற்கு ₹100 பணம் அனுப்பிய பின், கிடைக்கும் UTR எண்ணை பதிவு செய்து சமர்ப்பிக்கவும். சூப்பர் அட்மின் ஒப்புதல் அளித்த பிறகே அடையாள அட்டை PDF மற்றும் படங்கள் பதிவிறக்கம் செய்ய முடியும்.",
+                        fontSize = 11.5.sp,
+                        color = Color(0xFF475569),
+                        lineHeight = 16.sp
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showPendingApprovalDialog = false
+                        onOpenPayment?.invoke()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = UnionRed)
+                ) {
+                    Text("₹100 செலுத்து & UTR பதிவு செய்")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showPendingApprovalDialog = false }) {
+                    Text("சரி (OK)")
+                }
+            }
+        )
     }
 
     // Export & Download Dialog

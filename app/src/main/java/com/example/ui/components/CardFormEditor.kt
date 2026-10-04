@@ -42,11 +42,13 @@ import androidx.compose.material.icons.filled.LocationCity
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Opacity
 import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Payment
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SupervisorAccount
+import androidx.compose.material.icons.filled.Verified
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -962,6 +964,101 @@ fun CardFormEditor(
                                     }
                                 }
                             }
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Payment & Super Admin Approval Requirement Box (7010131915 - ₹100)
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = if (card.approvalStatus == "APPROVED") Color(0xFFF0FDF4) else Color(0xFFFFFBEB)
+                ),
+                border = androidx.compose.foundation.BorderStroke(
+                    1.2.dp,
+                    if (card.approvalStatus == "APPROVED") Color(0xFF86EFAC) else Color(0xFFFDE68A)
+                )
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = if (card.approvalStatus == "APPROVED") Icons.Default.Verified else Icons.Default.AccountBalanceWallet,
+                                contentDescription = null,
+                                tint = if (card.approvalStatus == "APPROVED") UnionGreen else Color(0xFFD97706),
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = if (card.approvalStatus == "APPROVED") "அங்கீகரிக்கப்பட்ட அட்டை (Approved)" else "₹100 கட்டணம் & ஒப்புதல் கட்டமைப்பு:",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = if (card.approvalStatus == "APPROVED") Color(0xFF166534) else Color(0xFF92400E)
+                            )
+                        }
+
+                        if (card.approvalStatus != "APPROVED") {
+                            Text(
+                                text = "₹100",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Black,
+                                color = UnionRed
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    if (card.approvalStatus == "APPROVED") {
+                        Text(
+                            text = "✓ இந்த அடையாள அட்டை சூப்பர் அட்மினால் சரிபார்க்கப்பட்டு அதிகாரப்பூர்வமாக அங்கீகரிக்கப்பட்டது.",
+                            fontSize = 11.sp,
+                            color = Color(0xFF15803D),
+                            fontWeight = FontWeight.Medium
+                        )
+                    } else {
+                        Text(
+                            text = "38 மாவட்ட மற்றும் மாநில பொறுப்பாளர்கள் கவனத்திற்கு:\n7010131915 எண்ணிற்கு ₹100 செலுத்தி UTR எண் பதிவிட்ட பின், சூப்பர் அட்மின் ஒப்புதல் அளித்த பிறகே அட்டை அதிகாரப்பூர்வமாக உருவாகும்.",
+                            fontSize = 11.sp,
+                            color = Color(0xFF78350F),
+                            lineHeight = 15.sp
+                        )
+
+                        if (card.utrNumber.isNotBlank()) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "சமர்ப்பிக்கப்பட்ட UTR: ${card.utrNumber} (சரிபார்ப்பு நிலுவையில்)",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = UnionNavy
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Button(
+                            onClick = onOpenPayment,
+                            colors = ButtonDefaults.buttonColors(containerColor = UnionRed),
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(38.dp)
+                        ) {
+                            Icon(Icons.Default.Payment, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = if (card.utrNumber.isNotBlank()) "UTR எண்ணை மாற்ற / மீண்டும் செலுத்த" else "7010131915-க்கு ₹100 செலுத்த & UTR உள்ளிட",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
                         }
                     }
                 }

@@ -2,9 +2,13 @@ package com.example.data
 
 import kotlinx.coroutines.flow.Flow
 
-class MemberCardRepository(private val dao: MemberCardDao) {
+class MemberCardRepository(
+    private val dao: MemberCardDao,
+    private val historyDao: MemberRegistrationHistoryDao
+) {
 
     val allCards: Flow<List<MemberCardEntity>> = dao.getAllCards()
+    val allHistory: Flow<List<MemberRegistrationHistoryEntity>> = historyDao.getAllHistory()
 
     fun getCardsByType(cardType: String): Flow<List<MemberCardEntity>> = dao.getCardsByType(cardType)
 
@@ -16,31 +20,114 @@ class MemberCardRepository(private val dao: MemberCardDao) {
 
     fun searchCards(query: String): Flow<List<MemberCardEntity>> = dao.searchCards(query)
 
-    suspend fun saveCard(card: MemberCardEntity): Long {
-        return if (card.id == 0L) {
+    fun getHistoryByDistrict(district: String): Flow<List<MemberRegistrationHistoryEntity>> = historyDao.getHistoryByDistrict(district)
+
+    fun getHistoryByMemberId(memberId: String): Flow<List<MemberRegistrationHistoryEntity>> = historyDao.getHistoryByMemberId(memberId)
+
+    fun searchHistory(query: String): Flow<List<MemberRegistrationHistoryEntity>> = historyDao.searchHistory(query)
+
+    suspend fun logHistory(history: MemberRegistrationHistoryEntity): Long {
+        return historyDao.insertHistory(history)
+    }
+
+    suspend fun saveCard(
+        card: MemberCardEntity,
+        actionType: String = if (card.id == 0L) "NEW_REGISTRATION" else "CARD_UPDATED",
+        actionTitleTamil: String = if (card.id == 0L) "புதிய உறுப்பினர் பதிவு" else "விவரங்கள் திருத்தப்பட்டது",
+        details: String = "${card.name} (${card.memberId}) - மாவட்டம்: ${card.district}, தொழில்: ${card.jobTitle}",
+        actor: String = "சுய பதிவு"
+    ): Long {
+        val savedId = if (card.id == 0L) {
             dao.insertCard(card)
         } else {
             dao.updateCard(card)
             card.id
         }
+
+        // Automatically log registration history
+        historyDao.insertHistory(
+            MemberRegistrationHistoryEntity(
+                cardId = savedId,
+                memberId = card.memberId,
+                memberName = card.name,
+                district = card.district,
+                jobTitle = card.jobTitle,
+                actionType = actionType,
+                actionTitleTamil = actionTitleTamil,
+                details = details,
+                actor = actor,
+                photoUri = card.photoUri,
+                timestamp = System.currentTimeMillis()
+            )
+        )
+
+        return savedId
     }
 
-    suspend fun updateApproval(id: Long, status: String, approvedBy: String, reason: String? = null) {
+    suspend fun updateApproval(
+        id: Long,
+        status: String,
+        approvedBy: String,
+        reason: String? = null,
+        memberCard: MemberCardEntity? = null
+    ) {
+        val now = System.currentTimeMillis()
         dao.updateApprovalStatus(
             id = id,
             status = status,
             approvedBy = approvedBy,
-            approvedAt = System.currentTimeMillis(),
+            approvedAt = now,
             reason = reason
+        )
+
+        val cardName = memberCard?.name ?: "உறுப்பினர் #$id"
+        val cardMemberId = memberCard?.memberId ?: "TN-ID-$id"
+        val cardDistrict = memberCard?.district ?: "தமிழ்நாடு"
+        val isApproved = status == "APPROVED"
+
+        historyDao.insertHistory(
+            MemberRegistrationHistoryEntity(
+                cardId = id,
+                memberId = cardMemberId,
+                memberName = cardName,
+                district = cardDistrict,
+                actionType = if (isApproved) "APPROVED" else "REJECTED",
+                actionTitleTamil = if (isApproved) "அடையாள அட்டை அங்கீகரிக்கப்பட்டது" else "விண்ணப்பம் நிராகரிக்கப்பட்டது",
+                details = if (isApproved) "சூப்பர் அட்மின் ஒப்புதல் அளித்தார். உறுப்பினர் எண்: $cardMemberId" else "காரணம்: ${reason ?: "தகவல் போதாது"}",
+                actor = approvedBy,
+                photoUri = memberCard?.photoUri,
+                timestamp = now
+            )
         )
     }
 
     suspend fun deleteCard(card: MemberCardEntity) {
         dao.deleteCard(card)
+        historyDao.insertHistory(
+            MemberRegistrationHistoryEntity(
+                cardId = card.id,
+                memberId = card.memberId,
+                memberName = card.name,
+                district = card.district,
+                actionType = "DELETED",
+                actionTitleTamil = "உறுப்பினர் அட்டை நீக்கப்பட்டது",
+                details = "${card.name} (${card.memberId}) அட்டை தரவுத்தளத்திலிருந்து நீக்கப்பட்டது.",
+                actor = "Super Admin",
+                timestamp = System.currentTimeMillis()
+            )
+        )
     }
 
     suspend fun deleteCardById(id: Long) {
         dao.deleteCardById(id)
+    }
+
+    suspend fun deleteHistoryById(id: Long) {
+        historyDao.deleteHistoryById(id)
+    }
+
+    suspend fun clearAllHistory() {
+        historyDao.clearAllHistory()
     }
 
     suspend fun checkAndSeedInitialData() {
@@ -148,6 +235,68 @@ class MemberCardRepository(private val dao: MemberCardDao) {
                 )
             )
             dao.insertAll(initialCards)
+
+            // Seed initial member registration history
+            val now = System.currentTimeMillis()
+            val dayMs = 86400000L
+            val initialHistories = listOf(
+                MemberRegistrationHistoryEntity(
+                    memberId = "TN-MDU-0001",
+                    memberName = "மு. கார்த்திகேயன்",
+                    district = "மதுரை",
+                    jobTitle = "வண்ணப் பூச்சாளர்",
+                    actionType = "NEW_REGISTRATION",
+                    actionTitleTamil = "புதிய உறுப்பினர் நேரடி பதிவு",
+                    details = "மதுரை மாவட்ட முதல் உறுப்பினர் எண் TN-MDU-0001 பதிவு செய்யப்பட்டு ஒப்புதல் அளிக்கப்பட்டது.",
+                    actor = "ஆதார் ஸ்கேனர் & சுய பதிவு",
+                    timestamp = now - (3 * dayMs)
+                ),
+                MemberRegistrationHistoryEntity(
+                    memberId = "TN-EXEC-MDU-0001",
+                    memberName = "S. மைक्केல் ஆல்வின்",
+                    district = "மதுரை",
+                    jobTitle = "தலைமை ஓவியர்",
+                    actionType = "NEW_REGISTRATION",
+                    actionTitleTamil = "நிர்வாகி அடையாள அட்டை பதிவு",
+                    details = "மாநிலத் தலைவர் பதவிக்கு நிர்வாக அடையாள அட்டை பதிவு செய்யப்பட்டது.",
+                    actor = "மாநில நிர்வாகக் குழு",
+                    timestamp = now - (2 * dayMs)
+                ),
+                MemberRegistrationHistoryEntity(
+                    memberId = "TN-CON-DGL-0001",
+                    memberName = "ஆர். சண்முகம்",
+                    district = "திண்டுக்கல்",
+                    jobTitle = "பெயிண்டிங் ஒப்பந்ததாரர்",
+                    actionType = "NEW_REGISTRATION",
+                    actionTitleTamil = "ஒப்பந்ததாரர் அங்கீகார அட்டை பதிவு",
+                    details = "திண்டுக்கல் மாவட்ட ஒப்பந்ததாரர் அட்டை TN-CON-DGL-0001 பதிவு செய்யப்பட்டது.",
+                    actor = "சுய பதிவு",
+                    timestamp = now - (1 * dayMs)
+                ),
+                MemberRegistrationHistoryEntity(
+                    memberId = "TN-CBE-0001",
+                    memberName = "வே. சுப்பிரமணி",
+                    district = "கோயம்புத்தூர்",
+                    jobTitle = "கலை ஓவியர்",
+                    actionType = "NEW_REGISTRATION",
+                    actionTitleTamil = "புதிய உறுப்பினர் பதிவு",
+                    details = "கோயம்புத்தூர் மாவட்ட அட்டை TN-CBE-0001 பதிவு செய்யப்பட்டு கட்டணம் செலுத்தப்பட்டது.",
+                    actor = "சுய பதிவு",
+                    timestamp = now - (12 * 3600000L)
+                ),
+                MemberRegistrationHistoryEntity(
+                    memberId = "TN-CHN-0001",
+                    memberName = "க. மாரிமுத்து",
+                    district = "சென்னை",
+                    jobTitle = "ஸ்ப்ரே பெயிண்டர்",
+                    actionType = "AADHAAR_AUTO_FILL",
+                    actionTitleTamil = "ஆதார் நேரடி ஸ்கேன் பதிவு",
+                    details = "சென்னை மாவட்ட ஆதார் கார்டு ஸ்கேன் செய்யப்பட்டு TN-CHN-0001 எண் ஒதுக்கப்பட்டது. ஒப்புதலுக்கு காத்திருக்கிறது.",
+                    actor = "ஆதார் ஸ்கேனர்",
+                    timestamp = now - (2 * 3600000L)
+                )
+            )
+            historyDao.insertAllHistory(initialHistories)
         }
     }
 }

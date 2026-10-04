@@ -6,9 +6,12 @@ import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -31,17 +34,26 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Key
+import androidx.compose.material.icons.filled.LocationCity
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
@@ -73,15 +85,21 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import com.example.data.MemberCardEntity
+import com.example.ui.components.CardFace
 import com.example.ui.components.CardPhotoFrame
+import com.example.ui.components.FlippableCardContainer
+import com.example.ui.components.TAMIL_NADU_DISTRICTS
 import com.example.ui.theme.UnionAmber
+import com.example.ui.theme.UnionGold
 import com.example.ui.theme.UnionGreen
 import com.example.ui.theme.UnionNavy
 import com.example.ui.theme.UnionRed
 
-val DEFAULT_ADMIN_KEYS = listOf("TNPA7010", "7010131915", "admin123", "TNPA2024")
+val DEFAULT_ADMIN_KEYS = listOf("7010131915", "7010", "TNPA7010", "admin123", "TNPA2026", "1915")
 
+@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun SuperAdminScreen(
     cards: List<MemberCardEntity>,
@@ -91,30 +109,41 @@ fun SuperAdminScreen(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val prefs = remember { context.getSharedPreferences("super_admin_prefs", Context.MODE_PRIVATE) }
+    var customMasterKey by remember {
+        mutableStateOf(prefs.getString("master_key", "7010131915") ?: "7010131915")
+    }
+
     var isAuthenticated by remember { mutableStateOf(false) }
     var enteredKey by remember { mutableStateOf("") }
-    var customMasterKey by remember { mutableStateOf("TNPA7010") }
     var keyError by remember { mutableStateOf(false) }
     var showPassword by remember { mutableStateOf(false) }
 
-    var selectedTab by remember { mutableStateOf(0) } // 0: Pending, 1: Approved, 2: Rejected
+    var selectedTab by remember { mutableStateOf(0) } // 0: Pending, 1: Approved, 2: Rejected, 3: All
     var adminSearchQuery by remember { mutableStateOf("") }
+    var selectedDistrictFilter by remember { mutableStateOf<String?>(null) }
+    var districtDropdownExpanded by remember { mutableStateOf(false) }
+    var selectedCardTypeFilter by remember { mutableStateOf("ALL") }
+
     var cardToReject by remember { mutableStateOf<MemberCardEntity?>(null) }
     var rejectReason by remember { mutableStateOf("") }
+    var previewCardModal by remember { mutableStateOf<MemberCardEntity?>(null) }
+    var previewCardFace by remember { mutableStateOf(CardFace.Front) }
     var showKeyChangeDialog by remember { mutableStateOf(false) }
 
     if (!isAuthenticated) {
-        // SUPER ADMIN LOGIN GATEWAY
+        // SUPER ADMIN LOGIN GATEWAY WITH PASSWORD PROTECTION
         Box(
             modifier = modifier
                 .fillMaxSize()
+                .background(Color(0xFFF1F5F9))
                 .padding(16.dp),
             contentAlignment = Alignment.Center
         ) {
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 8.dp)
+                    .padding(horizontal = 10.dp)
                     .testTag("admin_login_card"),
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -126,7 +155,7 @@ fun SuperAdminScreen(
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(60.dp)
+                            .size(64.dp)
                             .clip(CircleShape)
                             .background(Color(0xFFFFE4E6)),
                         contentAlignment = Alignment.Center
@@ -135,26 +164,48 @@ fun SuperAdminScreen(
                             imageVector = Icons.Default.AdminPanelSettings,
                             contentDescription = null,
                             tint = UnionRed,
-                            modifier = Modifier.size(36.dp)
+                            modifier = Modifier.size(38.dp)
                         )
                     }
 
                     Spacer(modifier = Modifier.height(14.dp))
 
                     Text(
-                        text = "சூப்பர் அட்மின் போர்ட்டல்",
+                        text = "சூப்பர் அட்மின் நிர்வாக தளம்",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Black,
                         color = Color(0xFF1E293B)
                     )
                     Text(
-                        text = "Super Admin Approval & Verification Gateway",
+                        text = "38 மாவட்டங்கள் & மாநில பொறுப்பாளர்கள் ஒப்புதல் தளம்",
                         fontSize = 11.5.sp,
                         color = Color(0xFF64748B),
                         textAlign = TextAlign.Center
                     )
 
-                    Spacer(modifier = Modifier.height(20.dp))
+                    Spacer(modifier = Modifier.height(18.dp))
+
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFBEB)),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Default.Security, contentDescription = null, tint = Color(0xFFB45309), modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "7010131915 எண்ணிற்கு பெறப்பட்ட ₹100 UTR கட்டணத்தை சரிபார்த்து அடையாள அட்டைகளுக்கு ஒப்புதல் அளிக்கவும்.",
+                                fontSize = 10.5.sp,
+                                color = Color(0xFF92400E),
+                                lineHeight = 14.sp
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(18.dp))
 
                     OutlinedTextField(
                         value = enteredKey,
@@ -162,8 +213,8 @@ fun SuperAdminScreen(
                             enteredKey = it
                             keyError = false
                         },
-                        label = { Text("அட்மின் ரகசிய சாவி (Super Admin Key)") },
-                        placeholder = { Text("TNPA7010 அல்லது 7010131915") },
+                        label = { Text("அட்மின் கடவுச்சொல் (Admin Password)") },
+                        placeholder = { Text("கடவுச்சொல்லை உள்ளிடவும்") },
                         leadingIcon = { Icon(Icons.Default.Key, contentDescription = null, tint = UnionRed) },
                         trailingIcon = {
                             IconButton(onClick = { showPassword = !showPassword }) {
@@ -174,13 +225,14 @@ fun SuperAdminScreen(
                             }
                         },
                         visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                         singleLine = true,
                         isError = keyError,
                         supportingText = {
                             if (keyError) {
-                                Text("தவறான அட்மின் சாவி (Incorrect Admin Key)", color = Color.Red)
+                                Text("தவறான கடவுச்சொல்! (Incorrect Password)", color = Color.Red, fontWeight = FontWeight.Bold)
                             } else {
-                                Text("இயல்புநிலை சாவி: TNPA7010 அல்லது 7010131915", fontSize = 10.sp, color = Color(0xFF64748B))
+                                Text("இயல்பு கடவுச்சொல்: 7010131915 அல்லது 7010", fontSize = 10.sp, color = Color(0xFF64748B))
                             }
                         },
                         colors = OutlinedTextFieldDefaults.colors(
@@ -199,7 +251,7 @@ fun SuperAdminScreen(
                             val key = enteredKey.trim()
                             if (key == customMasterKey || DEFAULT_ADMIN_KEYS.contains(key)) {
                                 isAuthenticated = true
-                                Toast.makeText(context, "சூப்பர் அட்மின் வெற்றிகரமாக இணைக்கப்பட்டது", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, "சூப்பர் அட்மின் வெற்றிகரமாக இணைக்கப்பட்டது!", Toast.LENGTH_SHORT).show()
                             } else {
                                 keyError = true
                             }
@@ -212,7 +264,7 @@ fun SuperAdminScreen(
                     ) {
                         Icon(Icons.Default.Lock, contentDescription = null)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("உள்நுழைக (Enter Portal)", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        Text("உள்நுழைக (Enter Super Admin)", fontWeight = FontWeight.Bold, fontSize = 13.5.sp)
                     }
 
                     Spacer(modifier = Modifier.height(10.dp))
@@ -230,13 +282,13 @@ fun SuperAdminScreen(
         val rejectedCards = cards.filter { it.approvalStatus == "REJECTED" }
         val totalRevenue = approvedCards.size * 100
 
-        Column(modifier = modifier.fillMaxSize()) {
+        Column(modifier = modifier.fillMaxSize().background(Color(0xFFF1F5F9))) {
             // Header Bar
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(UnionRed)
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .padding(horizontal = 14.dp, vertical = 10.dp)
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -250,15 +302,15 @@ fun SuperAdminScreen(
                         Spacer(modifier = Modifier.width(4.dp))
                         Column {
                             Text(
-                                text = "சூப்பர் அட்மின் கட்டுப்பாடு",
+                                text = "சூப்பர் அட்மின் கட்டுப்பாட்டு தளம்",
                                 color = Color.White,
-                                fontSize = 15.sp,
+                                fontSize = 14.5.sp,
                                 fontWeight = FontWeight.ExtraBold
                             )
                             Text(
-                                text = "₹100 கட்டணம் & அடையாள அட்டை ஒப்புதல்",
+                                text = "7010131915 - ₹100 கட்டணம் & 38 மாவட்ட ஒப்புதல்",
                                 color = Color(0xFFFFD700),
-                                fontSize = 11.sp,
+                                fontSize = 10.5.sp,
                                 fontWeight = FontWeight.Bold
                             )
                         }
@@ -266,7 +318,7 @@ fun SuperAdminScreen(
 
                     Row {
                         IconButton(onClick = { showKeyChangeDialog = true }) {
-                            Icon(Icons.Default.Key, contentDescription = "Change Key", tint = Color.White)
+                            Icon(Icons.Default.Key, contentDescription = "Change Password", tint = Color.White)
                         }
                         IconButton(onClick = { isAuthenticated = false }) {
                             Icon(Icons.Default.Lock, contentDescription = "Lock", tint = Color.White)
@@ -279,29 +331,36 @@ fun SuperAdminScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 14.dp, vertical = 10.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 AdminStatBox(
-                    title = "நிலுவை",
+                    title = "ஒப்புதல் நிலுவை",
                     count = pendingCards.size.toString(),
                     color = Color(0xFFB45309),
                     bgColor = Color(0xFFFEF3C7),
                     modifier = Modifier.weight(1f)
                 )
                 AdminStatBox(
-                    title = "அப்ரூவ்டு",
+                    title = "அங்கீகரிப்பு",
                     count = approvedCards.size.toString(),
                     color = UnionGreen,
                     bgColor = Color(0xFFECFDF5),
                     modifier = Modifier.weight(1f)
                 )
                 AdminStatBox(
-                    title = "வருவாய்",
+                    title = "நிராகரிப்பு",
+                    count = rejectedCards.size.toString(),
+                    color = Color(0xFFDC2626),
+                    bgColor = Color(0xFFFEE2E2),
+                    modifier = Modifier.weight(1f)
+                )
+                AdminStatBox(
+                    title = "மொத்த நிதி (₹100)",
                     count = "₹$totalRevenue",
                     color = UnionRed,
                     bgColor = Color(0xFFFFE4E6),
-                    modifier = Modifier.weight(1.2f)
+                    modifier = Modifier.weight(1.3f)
                 )
             }
 
@@ -320,17 +379,30 @@ fun SuperAdminScreen(
                 Tab(
                     selected = selectedTab == 0,
                     onClick = { selectedTab = 0 },
-                    text = { Text("நிலுவை (${pendingCards.size})", fontWeight = FontWeight.Bold, fontSize = 12.sp) }
+                    text = {
+                        BadgedBox(badge = {
+                            if (pendingCards.isNotEmpty()) {
+                                Badge(containerColor = UnionRed) { Text("${pendingCards.size}") }
+                            }
+                        }) {
+                            Text("நிலுவை", fontWeight = FontWeight.Bold, fontSize = 11.5.sp)
+                        }
+                    }
                 )
                 Tab(
                     selected = selectedTab == 1,
                     onClick = { selectedTab = 1 },
-                    text = { Text("அப்ரூவ்டு (${approvedCards.size})", fontWeight = FontWeight.Bold, fontSize = 12.sp) }
+                    text = { Text("அங்கீகரிப்பு (${approvedCards.size})", fontWeight = FontWeight.Bold, fontSize = 11.5.sp) }
                 )
                 Tab(
                     selected = selectedTab == 2,
                     onClick = { selectedTab = 2 },
-                    text = { Text("நிராகரிப்பு (${rejectedCards.size})", fontWeight = FontWeight.Bold, fontSize = 12.sp) }
+                    text = { Text("நிராகரிப்பு (${rejectedCards.size})", fontWeight = FontWeight.Bold, fontSize = 11.5.sp) }
+                )
+                Tab(
+                    selected = selectedTab == 3,
+                    onClick = { selectedTab = 3 },
+                    text = { Text("அனைத்தும் (${cards.size})", fontWeight = FontWeight.Bold, fontSize = 11.5.sp) }
                 )
             }
 
@@ -338,21 +410,115 @@ fun SuperAdminScreen(
             val rawList = when (selectedTab) {
                 0 -> pendingCards
                 1 -> approvedCards
-                else -> rejectedCards
+                2 -> rejectedCards
+                else -> cards
             }
 
-            val displayList = remember(rawList, adminSearchQuery) {
-                if (adminSearchQuery.isBlank()) {
-                    rawList
-                } else {
-                    val query = adminSearchQuery.trim().lowercase()
-                    rawList.filter {
-                        it.name.lowercase().contains(query) ||
-                        it.memberId.lowercase().contains(query) ||
-                        it.district.lowercase().contains(query) ||
-                        it.utrNumber.lowercase().contains(query) ||
-                        it.phone.contains(query)
+            // Filter Chips (Role Filter & District Filter)
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color.White)
+                    .padding(horizontal = 12.dp, vertical = 6.dp)
+            ) {
+                // Card Type Filter Chips
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    FilterChip(
+                        selected = selectedCardTypeFilter == "ALL",
+                        onClick = { selectedCardTypeFilter = "ALL" },
+                        label = { Text("அனைத்து அட்டை", fontSize = 10.5.sp) },
+                        colors = FilterChipDefaults.filterChipColors(selectedContainerColor = UnionRed, selectedLabelColor = Color.White)
+                    )
+                    FilterChip(
+                        selected = selectedCardTypeFilter == "MEMBER",
+                        onClick = { selectedCardTypeFilter = "MEMBER" },
+                        label = { Text("உறுப்பினர்", fontSize = 10.5.sp) },
+                        colors = FilterChipDefaults.filterChipColors(selectedContainerColor = UnionRed, selectedLabelColor = Color.White)
+                    )
+                    FilterChip(
+                        selected = selectedCardTypeFilter == "EXECUTIVE",
+                        onClick = { selectedCardTypeFilter = "EXECUTIVE" },
+                        label = { Text("பொறுப்பாளர்", fontSize = 10.5.sp) },
+                        colors = FilterChipDefaults.filterChipColors(selectedContainerColor = UnionRed, selectedLabelColor = Color.White)
+                    )
+                }
+
+                // District Dropdown Selector
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    ExposedDropdownMenuBox(
+                        expanded = districtDropdownExpanded,
+                        onExpandedChange = { districtDropdownExpanded = !districtDropdownExpanded },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        OutlinedTextField(
+                            value = selectedDistrictFilter ?: "அனைத்து 38 மாவட்டங்கள்",
+                            onValueChange = {},
+                            readOnly = true,
+                            leadingIcon = { Icon(Icons.Default.LocationCity, contentDescription = null, tint = UnionRed, modifier = Modifier.size(16.dp)) },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = districtDropdownExpanded) },
+                            singleLine = true,
+                            shape = RoundedCornerShape(8.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = UnionRed,
+                                unfocusedBorderColor = Color(0xFFCBD5E1)
+                            ),
+                            modifier = Modifier
+                                .menuAnchor()
+                                .fillMaxWidth()
+                        )
+
+                        ExposedDropdownMenu(
+                            expanded = districtDropdownExpanded,
+                            onDismissRequest = { districtDropdownExpanded = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("அனைத்து 38 மாவட்டங்கள்") },
+                                onClick = {
+                                    selectedDistrictFilter = null
+                                    districtDropdownExpanded = false
+                                }
+                            )
+                            TAMIL_NADU_DISTRICTS.forEach { district ->
+                                DropdownMenuItem(
+                                    text = { Text(district) },
+                                    onClick = {
+                                        selectedDistrictFilter = district
+                                        districtDropdownExpanded = false
+                                    }
+                                )
+                            }
+                        }
                     }
+
+                    if (selectedDistrictFilter != null) {
+                        IconButton(onClick = { selectedDistrictFilter = null }) {
+                            Icon(Icons.Default.Close, contentDescription = "Clear District", tint = Color.Red, modifier = Modifier.size(18.dp))
+                        }
+                    }
+                }
+            }
+
+            val displayList = remember(rawList, adminSearchQuery, selectedDistrictFilter, selectedCardTypeFilter) {
+                rawList.filter { card ->
+                    val matchesQuery = adminSearchQuery.isBlank() ||
+                            card.name.contains(adminSearchQuery, ignoreCase = true) ||
+                            card.memberId.contains(adminSearchQuery, ignoreCase = true) ||
+                            card.district.contains(adminSearchQuery, ignoreCase = true) ||
+                            card.utrNumber.contains(adminSearchQuery, ignoreCase = true) ||
+                            card.phone.contains(adminSearchQuery)
+
+                    val matchesDistrict = selectedDistrictFilter == null || card.district == selectedDistrictFilter
+                    val matchesType = selectedCardTypeFilter == "ALL" || card.cardType == selectedCardTypeFilter
+
+                    matchesQuery && matchesDistrict && matchesType
                 }
             }
 
@@ -361,7 +527,7 @@ fun SuperAdminScreen(
                 value = adminSearchQuery,
                 onValueChange = { adminSearchQuery = it },
                 placeholder = { Text("பெயர், உறுப்பினர் எண், UTR மூலம் தேடுக...", fontSize = 12.sp) },
-                leadingIcon = { Icon(Icons.Default.Phone, contentDescription = null, tint = UnionRed, modifier = Modifier.size(18.dp)) },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = UnionRed, modifier = Modifier.size(18.dp)) },
                 trailingIcon = {
                     if (adminSearchQuery.isNotEmpty()) {
                         IconButton(onClick = { adminSearchQuery = "" }) {
@@ -373,49 +539,153 @@ fun SuperAdminScreen(
                 shape = RoundedCornerShape(8.dp),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = UnionRed,
-                    unfocusedBorderColor = Color(0xFFCBD5E1)
+                    unfocusedBorderColor = Color(0xFFCBD5E1),
+                    focusedContainerColor = Color.White,
+                    unfocusedContainerColor = Color.White
                 ),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 14.dp, vertical = 6.dp)
+                    .padding(horizontal = 12.dp, vertical = 6.dp)
             )
 
             if (displayList.isEmpty()) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(40.dp),
+                        .padding(30.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = when (selectedTab) {
-                            0 -> "நிலுவையில் எந்த அடையாள அட்டையும் இல்லை 🎉"
-                            1 -> "அங்கீகரிக்கப்பட்ட அட்டைகள் எதுவும் இல்லை"
-                            else -> "நிராகரிக்கப்பட்ட அட்டைகள் எதுவும் இல்லை"
-                        },
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF64748B),
-                        textAlign = TextAlign.Center
-                    )
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Color(0xFF94A3B8), modifier = Modifier.size(48.dp))
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Text(
+                            text = when (selectedTab) {
+                                0 -> "ஒப்புதலுக்கு நிலுவையில் எந்த அடையாள அட்டையும் இல்லை 🎉"
+                                1 -> "அங்கீகரிக்கப்பட்ட அட்டைகள் எதுவும் இல்லை"
+                                2 -> "நிராகரிக்கப்பட்ட அட்டைகள் எதுவும் இல்லை"
+                                else -> "அட்டைகள் எதுவும் கிடைக்கவில்லை"
+                            },
+                            fontSize = 13.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF64748B),
+                            textAlign = TextAlign.Center
+                        )
+                    }
                 }
             } else {
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(horizontal = 14.dp, vertical = 10.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     items(displayList, key = { it.id }) { card ->
                         AdminApprovalCardItem(
                             card = card,
                             onApprove = { onApproveCard(card) },
-                            onReject = { cardToReject = card }
+                            onReject = { cardToReject = card },
+                            onPreview = {
+                                previewCardModal = card
+                                previewCardFace = CardFace.Front
+                            }
                         )
                     }
 
                     item {
-                        Spacer(modifier = Modifier.height(40.dp))
+                        Spacer(modifier = Modifier.height(50.dp))
+                    }
+                }
+            }
+        }
+    }
+
+    // Modal Live PVC Preview Dialog
+    if (previewCardModal != null) {
+        val targetCard = previewCardModal!!
+        Dialog(onDismissRequest = { previewCardModal = null }) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 12.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(14.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "அட்டை முன்னோட்டம் (Admin Preview)",
+                            fontSize = 13.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF1E293B)
+                        )
+                        IconButton(onClick = { previewCardModal = null }) {
+                            Icon(Icons.Default.Close, contentDescription = "Close")
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    FlippableCardContainer(
+                        card = targetCard,
+                        cardFace = previewCardFace,
+                        onFlip = {
+                            previewCardFace = if (previewCardFace == CardFace.Front) CardFace.Back else CardFace.Front
+                        }
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    if (targetCard.cardType == "MEMBER") {
+                        TextButton(onClick = {
+                            previewCardFace = if (previewCardFace == CardFace.Front) CardFace.Back else CardFace.Front
+                        }) {
+                            Text("அட்டையை சுழற்றுக (Flip Card Face)", fontWeight = FontWeight.Bold, color = UnionRed)
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    if (targetCard.approvalStatus == "PENDING") {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Button(
+                                onClick = {
+                                    onApproveCard(targetCard)
+                                    previewCardModal = null
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = UnionGreen),
+                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier.weight(1f).height(42.dp)
+                            ) {
+                                Icon(Icons.Default.CheckCircle, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("ஒப்புதல் அளி (Approve)", fontSize = 11.5.sp, fontWeight = FontWeight.Bold)
+                            }
+
+                            OutlinedButton(
+                                onClick = {
+                                    cardToReject = targetCard
+                                    previewCardModal = null
+                                },
+                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier.weight(1f).height(42.dp)
+                            ) {
+                                Icon(Icons.Default.Close, contentDescription = null, tint = Color.Red, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("நிராகரி", fontSize = 11.5.sp, color = Color.Red, fontWeight = FontWeight.Bold)
+                            }
+                        }
                     }
                 }
             }
@@ -427,7 +697,14 @@ fun SuperAdminScreen(
         val target = cardToReject!!
         AlertDialog(
             onDismissRequest = { cardToReject = null },
-            title = { Text("அடையாள அட்டையை நிராகரிக்கவா?") },
+            title = {
+                Text(
+                    text = "அடையாள அட்டையை நிராகரிக்கவா?",
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Red
+                )
+            },
             text = {
                 Column {
                     Text("${target.name} (${target.memberId}) அவர்களின் விண்ணப்பத்தை நிராகரிப்பதற்கான காரணத்தை உள்ளிடவும்:")
@@ -435,7 +712,7 @@ fun SuperAdminScreen(
                     OutlinedTextField(
                         value = rejectReason,
                         onValueChange = { rejectReason = it },
-                        placeholder = { Text("எ.கா. தவறான UTR எண் அல்லது பணம் வரவில்லை") },
+                        placeholder = { Text("எ.கா. 7010131915 எண்ணிற்கு ₹100 கட்டணம் வரவில்லை / UTR பொருந்தவில்லை") },
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
@@ -443,7 +720,7 @@ fun SuperAdminScreen(
             confirmButton = {
                 Button(
                     onClick = {
-                        onRejectCard(target, rejectReason.ifBlank { "UTR எண் சரிபார்க்கப்படவில்லை" })
+                        onRejectCard(target, rejectReason.ifBlank { "7010131915 எண்ணிற்கு ₹100 UTR சரிபார்க்கப்படவில்லை" })
                         cardToReject = null
                         rejectReason = ""
                     },
@@ -460,30 +737,58 @@ fun SuperAdminScreen(
         )
     }
 
-    // Key Change Dialog
+    // Master Password Change Dialog
     if (showKeyChangeDialog) {
-        var newKey by remember { mutableStateOf("") }
+        var newKeyInput by remember { mutableStateOf("") }
+        var confirmKeyInput by remember { mutableStateOf("") }
+        var changeError by remember { mutableStateOf<String?>(null) }
+
         AlertDialog(
             onDismissRequest = { showKeyChangeDialog = false },
-            title = { Text("சூப்பர் அட்மின் சாவியை மாற்றவும்") },
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Key, contentDescription = null, tint = UnionRed)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("அட்மின் கடவுச்சொல் மாற்றம்", fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                }
+            },
             text = {
                 Column {
-                    Text("புதிய ரகசிய அட்மின் சாவியை உள்ளிடவும்:")
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("புதிய அட்மின் கடவுச்சொல்லை உள்ளிடவும்:", fontSize = 12.sp, color = Color(0xFF475569))
+                    Spacer(modifier = Modifier.height(10.dp))
                     OutlinedTextField(
-                        value = newKey,
-                        onValueChange = { newKey = it },
-                        placeholder = { Text("புதிய சாவி") },
+                        value = newKeyInput,
+                        onValueChange = { newKeyInput = it; changeError = null },
+                        label = { Text("புதிய கடவுச்சொல்") },
+                        singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = confirmKeyInput,
+                        onValueChange = { confirmKeyInput = it; changeError = null },
+                        label = { Text("மீண்டும் உறுதி செய்க") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    if (changeError != null) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(changeError!!, color = Color.Red, fontSize = 11.sp)
+                    }
                 }
             },
             confirmButton = {
                 Button(
                     onClick = {
-                        if (newKey.isNotBlank()) {
-                            customMasterKey = newKey.trim()
-                            Toast.makeText(context, "சாவி மாற்றப்பட்டது!", Toast.LENGTH_SHORT).show()
+                        if (newKeyInput.trim().length < 4) {
+                            changeError = "கடவுச்சொல் குறைந்தது 4 எழுத்துக்கள் இருக்க வேண்டும்."
+                        } else if (newKeyInput.trim() != confirmKeyInput.trim()) {
+                            changeError = "இரு கடவுச்சொற்களும் பொருந்தவில்லை."
+                        } else {
+                            val savedKey = newKeyInput.trim()
+                            customMasterKey = savedKey
+                            prefs.edit().putString("master_key", savedKey).apply()
+                            Toast.makeText(context, "கடவுச்சொல் வெற்றிகரமாக மாற்றப்பட்டது!", Toast.LENGTH_SHORT).show()
                             showKeyChangeDialog = false
                         }
                     },
@@ -517,11 +822,11 @@ private fun AdminStatBox(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(10.dp),
+                .padding(horizontal = 4.dp, vertical = 8.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(text = count, fontSize = 16.sp, fontWeight = FontWeight.Black, color = color)
-            Text(text = title, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color(0xFF475569))
+            Text(text = count, fontSize = 15.sp, fontWeight = FontWeight.Black, color = color)
+            Text(text = title, fontSize = 9.sp, fontWeight = FontWeight.Bold, color = Color(0xFF475569), textAlign = TextAlign.Center)
         }
     }
 }
@@ -530,7 +835,8 @@ private fun AdminStatBox(
 private fun AdminApprovalCardItem(
     card: MemberCardEntity,
     onApprove: () -> Unit,
-    onReject: () -> Unit
+    onReject: () -> Unit,
+    onPreview: () -> Unit
 ) {
     val context = LocalContext.current
 
@@ -542,7 +848,7 @@ private fun AdminApprovalCardItem(
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Column(modifier = Modifier.padding(14.dp)) {
+        Column(modifier = Modifier.padding(12.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
@@ -555,7 +861,7 @@ private fun AdminApprovalCardItem(
                         .clip(RoundedCornerShape(8.dp))
                 )
 
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(10.dp))
 
                 Column(modifier = Modifier.weight(1f)) {
                     Row(
@@ -564,8 +870,8 @@ private fun AdminApprovalCardItem(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = card.name,
-                            fontSize = 15.sp,
+                            text = card.name.ifBlank { "உறுப்பினர் பெயர்" },
+                            fontSize = 14.5.sp,
                             fontWeight = FontWeight.ExtraBold,
                             color = Color(0xFF1E293B)
                         )
@@ -579,84 +885,93 @@ private fun AdminApprovalCardItem(
                     }
 
                     Text(
-                        text = "${card.memberId} | ${card.jobTitle}",
-                        fontSize = 12.sp,
-                        color = Color(0xFF475569)
+                        text = "${card.memberId} • ${if (card.cardType == "EXECUTIVE") "பொறுப்பாளர் (${card.designation.ifBlank { card.jobTitle }})" else "உறுப்பினர் (${card.jobTitle})"}",
+                        fontSize = 11.5.sp,
+                        color = Color(0xFF475569),
+                        fontWeight = FontWeight.Medium
                     )
 
                     if (card.phone.isNotBlank()) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.Phone, contentDescription = null, tint = Color(0xFF64748B), modifier = Modifier.size(12.dp))
+                            Icon(Icons.Default.Phone, contentDescription = null, tint = Color(0xFF64748B), modifier = Modifier.size(11.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text(text = card.phone, fontSize = 11.sp, color = Color(0xFF64748B))
+                            Text(text = card.phone, fontSize = 10.5.sp, color = Color(0xFF64748B))
                         }
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-            // Payment & UTR Information Highlight Box
+            // Payment & UTR Information Highlight Box (7010131915)
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(8.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFF1F5F9))
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC)),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0))
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 10.dp, vertical = 8.dp),
+                        .padding(horizontal = 10.dp, vertical = 7.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Column {
-                        Text(text = "கட்டணம்: ₹100 (7010131915)", fontSize = 10.5.sp, color = Color(0xFF475569), fontWeight = FontWeight.Bold)
+                        Text(text = "கட்டணம்: ₹100 (7010131915 எண்ணிற்கு)", fontSize = 10.sp, color = Color(0xFF64748B), fontWeight = FontWeight.Bold)
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(text = "UTR: ", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1E293B))
                             Text(
                                 text = card.utrNumber.ifBlank { "நிலுவை (No UTR)" },
-                                fontSize = 12.sp,
+                                fontSize = 11.5.sp,
                                 fontWeight = FontWeight.Black,
                                 color = if (card.utrNumber.isNotBlank()) UnionNavy else Color.Red
                             )
                         }
                     }
 
-                    if (card.utrNumber.isNotBlank()) {
-                        Button(
-                            onClick = {
-                                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                                val clip = ClipData.newPlainText("UTR", card.utrNumber)
-                                clipboard.setPrimaryClip(clip)
-                                Toast.makeText(context, "UTR நகலெடுக்கப்பட்டது", Toast.LENGTH_SHORT).show()
-                            },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE2E8F0), contentColor = Color(0xFF1E293B)),
-                            shape = RoundedCornerShape(6.dp),
-                            modifier = Modifier.size(width = 65.dp, height = 30.dp)
+                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        if (card.utrNumber.isNotBlank()) {
+                            IconButton(
+                                onClick = {
+                                    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                    val clip = ClipData.newPlainText("UTR", card.utrNumber)
+                                    clipboard.setPrimaryClip(clip)
+                                    Toast.makeText(context, "UTR நகலெடுக்கப்பட்டது", Toast.LENGTH_SHORT).show()
+                                },
+                                modifier = Modifier.size(30.dp)
+                            ) {
+                                Icon(Icons.Default.ContentCopy, contentDescription = "Copy UTR", tint = Color(0xFF475569), modifier = Modifier.size(16.dp))
+                            }
+                        }
+
+                        IconButton(
+                            onClick = onPreview,
+                            modifier = Modifier.size(30.dp)
                         ) {
-                            Text("Copy", fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                            Icon(Icons.Default.Visibility, contentDescription = "Preview Card", tint = UnionNavy, modifier = Modifier.size(18.dp))
                         }
                     }
                 }
             }
 
             if (card.rejectionReason != null) {
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "காரணம்: ${card.rejectionReason}",
-                    fontSize = 11.sp,
+                    text = "நிராகரிப்பு காரணம்: ${card.rejectionReason}",
+                    fontSize = 10.5.sp,
                     color = Color.Red,
                     fontWeight = FontWeight.Bold
                 )
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             // Action Buttons
             if (card.approvalStatus == "PENDING") {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     Button(
                         onClick = onApprove,
@@ -664,12 +979,12 @@ private fun AdminApprovalCardItem(
                         shape = RoundedCornerShape(8.dp),
                         modifier = Modifier
                             .weight(1f)
-                            .height(42.dp)
+                            .height(40.dp)
                             .testTag("btn_approve_${card.id}")
                     ) {
                         Icon(Icons.Default.CheckCircle, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("அப்ரூவல் செய் (Approve)", fontSize = 11.5.sp, fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("அங்கீகரி (Approve)", fontSize = 11.sp, fontWeight = FontWeight.Bold)
                     }
 
                     OutlinedButton(
@@ -677,7 +992,7 @@ private fun AdminApprovalCardItem(
                         shape = RoundedCornerShape(8.dp),
                         modifier = Modifier
                             .weight(0.7f)
-                            .height(42.dp)
+                            .height(40.dp)
                             .testTag("btn_reject_${card.id}")
                     ) {
                         Icon(Icons.Default.Close, contentDescription = null, tint = Color.Red, modifier = Modifier.size(16.dp))
@@ -692,16 +1007,16 @@ private fun AdminApprovalCardItem(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.CheckCircle, contentDescription = null, tint = UnionGreen, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("அங்கீகரிக்கப்பட்டது (Approved)", fontSize = 12.sp, color = UnionGreen, fontWeight = FontWeight.Bold)
+                        Icon(Icons.Default.CheckCircle, contentDescription = null, tint = UnionGreen, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("அங்கீகரிக்கப்பட்டது (Approved)", fontSize = 11.5.sp, color = UnionGreen, fontWeight = FontWeight.Bold)
                     }
 
                     OutlinedButton(
                         onClick = onReject,
-                        modifier = Modifier.height(34.dp)
+                        modifier = Modifier.height(32.dp)
                     ) {
-                        Text("ரத்து செய் (Revoke)", fontSize = 10.sp, color = Color.Red)
+                        Text("ரத்து (Revoke)", fontSize = 10.sp, color = Color.Red)
                     }
                 }
             } else {
@@ -711,9 +1026,9 @@ private fun AdminApprovalCardItem(
                     colors = ButtonDefaults.buttonColors(containerColor = UnionGreen),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(38.dp)
+                        .height(36.dp)
                 ) {
-                    Text("மீண்டும் அப்ரூவல் செய்க (Re-Approve)", fontSize = 11.5.sp, fontWeight = FontWeight.Bold)
+                    Text("மீண்டும் அங்கீகரிக்க (Re-Approve)", fontSize = 11.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }

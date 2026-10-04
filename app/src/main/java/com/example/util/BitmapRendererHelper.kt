@@ -110,8 +110,8 @@ object BitmapRendererHelper {
         canvas.drawText("தமிழ்நாடு பெயிண்டர்கள் மற்றும் ஓவியர்கள்", width / 2f, 52f, titlePaint1)
 
         val titlePaint2 = Paint().apply {
-            color = Color.WHITE
-            textSize = 37f
+            color = Color.parseColor("#FFEB3B")
+            textSize = 39f
             isFakeBoldText = true
             textAlign = Paint.Align.CENTER
             isAntiAlias = true
@@ -127,7 +127,7 @@ object BitmapRendererHelper {
             isAntiAlias = true
             if (tamilTypeface != null) typeface = tamilTypeface
         }
-        canvas.drawText("அரசு பதிவு எண்  TNMDUJCLMDUTU-50-26-00044", width / 2f, 134f, subPaint)
+        canvas.drawText("அரசு பதிவு எண் : TNMDUJCLMDUTU-50-26-00044", width / 2f, 134f, subPaint)
 
         val addrPaint = Paint().apply {
             color = Color.WHITE
@@ -137,7 +137,7 @@ object BitmapRendererHelper {
             isAntiAlias = true
             if (tamilTypeface != null) typeface = tamilTypeface
         }
-        canvas.drawText("1/14 அம்பலக்காரன் பட்டி உத்தங்குடி மதுரை 625107", width / 2f, 172f, addrPaint)
+        canvas.drawText("1/14 அம்பலக்காரன் பட்டி, ஒத்தங்குடி, மதுரை - 625107", width / 2f, 172f, addrPaint)
 
         // 2. MAIN BODY SECTION
         val labelPaint = Paint().apply {
@@ -148,8 +148,8 @@ object BitmapRendererHelper {
             if (tamilTypeface != null) typeface = tamilTypeface
         }
         val valuePaint = Paint().apply {
-            color = Color.parseColor("#111827")
-            textSize = 36f
+            color = Color.BLACK
+            textSize = 37f
             isFakeBoldText = true
             isAntiAlias = true
             if (tamilTypeface != null) typeface = tamilTypeface

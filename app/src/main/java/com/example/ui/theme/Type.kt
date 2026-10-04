@@ -13,7 +13,9 @@ val NotoSansTamilFontFamily = FontFamily(
     Font(R.font.noto_sans_tamil, FontWeight.Normal),
     Font(R.font.noto_sans_tamil, FontWeight.Medium),
     Font(R.font.noto_sans_tamil, FontWeight.SemiBold),
-    Font(R.font.noto_sans_tamil, FontWeight.Bold)
+    Font(R.font.noto_sans_tamil, FontWeight.Bold),
+    Font(R.font.noto_sans_tamil, FontWeight.ExtraBold),
+    Font(R.font.noto_sans_tamil, FontWeight.Black)
 )
 
 // Complete Material 3 typography with natural Tamil font styling and zero letter-spacing

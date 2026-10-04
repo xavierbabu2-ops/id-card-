@@ -30,6 +30,7 @@ import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.DocumentScanner
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Flip
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocationCity
 import androidx.compose.material.icons.filled.People
@@ -99,6 +100,7 @@ fun CardMakerScreen(
     val cardFace by viewModel.cardFace.collectAsStateWithLifecycle()
     val currentTab by viewModel.currentTab.collectAsStateWithLifecycle()
     val allCards by viewModel.allCards.collectAsStateWithLifecycle()
+    val allHistory by viewModel.allHistory.collectAsStateWithLifecycle()
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     val selectedFilter by viewModel.selectedFilter.collectAsStateWithLifecycle()
     val showInfoDialog by viewModel.showInfoDialog.collectAsStateWithLifecycle()
@@ -366,13 +368,39 @@ fun CardMakerScreen(
                         selected = currentTab == AppNavTab.DIRECTORY,
                         onClick = { viewModel.setTab(AppNavTab.DIRECTORY) },
                         icon = { Icon(Icons.Default.People, contentDescription = "Directory") },
-                        label = { Text("பதிவேடு (${allCards.size})", fontSize = 9.5.sp, fontWeight = FontWeight.Bold) },
+                        label = { Text("பதிவேடு (${allCards.size})", fontSize = 9.sp, fontWeight = FontWeight.Bold) },
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = UnionRed,
                             selectedTextColor = UnionRed,
                             indicatorColor = Color(0xFFFFE4E6)
                         ),
                         modifier = Modifier.testTag("tab_directory")
+                    )
+
+                    NavigationBarItem(
+                        selected = currentTab == AppNavTab.HISTORY,
+                        onClick = { viewModel.setTab(AppNavTab.HISTORY) },
+                        icon = {
+                            BadgedBox(badge = {
+                                if (allHistory.isNotEmpty()) {
+                                    Badge(
+                                        containerColor = UnionRed,
+                                        contentColor = Color.White
+                                    ) {
+                                        Text("${allHistory.size}", fontSize = 8.sp)
+                                    }
+                                }
+                            }) {
+                                Icon(Icons.Default.History, contentDescription = "History")
+                            }
+                        },
+                        label = { Text("வரலாறு", fontSize = 9.sp, fontWeight = FontWeight.Bold) },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = UnionRed,
+                            selectedTextColor = UnionRed,
+                            indicatorColor = Color(0xFFFFE4E6)
+                        ),
+                        modifier = Modifier.testTag("tab_history")
                     )
                 }
             }
@@ -535,7 +563,9 @@ fun CardMakerScreen(
                         cardFace = cardFace,
                         onFlip = { viewModel.flipCardFace() },
                         onEdit = { viewModel.setTab(AppNavTab.EDITOR) },
-                        onSave = { viewModel.saveCurrentCard() }
+                        onSave = { viewModel.saveCurrentCard() },
+                        onOpenPayment = { viewModel.setShowPaymentDialog(true) },
+                        onOpenSuperAdmin = { viewModel.setTab(AppNavTab.SUPER_ADMIN) }
                     )
                 }
 
@@ -562,6 +592,17 @@ fun CardMakerScreen(
                             viewModel.resetToNewCard("MEMBER")
                             viewModel.setTab(AppNavTab.EDITOR)
                         }
+                    )
+                }
+
+                AppNavTab.HISTORY -> {
+                    MemberRegistrationHistoryScreen(
+                        historyList = allHistory,
+                        allCards = allCards,
+                        onSelectCardForPreview = { viewModel.selectCardForPreview(it) },
+                        onSelectCardForEdit = { viewModel.selectCardForEdit(it) },
+                        onClearAllHistory = { viewModel.clearAllHistory() },
+                        onBack = { viewModel.setTab(AppNavTab.EDITOR) }
                     )
                 }
 

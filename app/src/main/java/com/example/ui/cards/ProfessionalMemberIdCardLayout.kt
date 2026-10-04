@@ -129,35 +129,35 @@ fun ProfessionalMemberIdCardLayout(
                         Text(
                             text = "தமிழ்நாடு பெயிண்டர்கள் மற்றும் ஓவியர்கள்",
                             color = Color.White,
-                            fontSize = 10.5.sp,
+                            fontSize = 11.2.sp,
                             fontWeight = FontWeight.Black,
                             textAlign = TextAlign.Center,
-                            lineHeight = 12.sp,
+                            lineHeight = 12.8.sp,
                             maxLines = 1
                         )
                         Text(
                             text = "முன்னேற்ற சங்கம்",
-                            color = Color.White,
-                            fontSize = 11.5.sp,
+                            color = Color(0xFFFFEB3B),
+                            fontSize = 12.2.sp,
                             fontWeight = FontWeight.Black,
                             textAlign = TextAlign.Center,
-                            lineHeight = 13.sp,
+                            lineHeight = 13.8.sp,
                             maxLines = 1
                         )
-                        Spacer(modifier = Modifier.height(0.5.dp))
+                        Spacer(modifier = Modifier.height(1.dp))
                         Text(
-                            text = "அரசு பதிவு எண்  TNMDUJCLMDUTU-50-26-00044",
+                            text = "அரசு பதிவு எண் : TNMDUJCLMDUTU-50-26-00044",
+                            color = Color.White,
+                            fontSize = 7.sp,
+                            fontWeight = FontWeight.Black,
+                            textAlign = TextAlign.Center,
+                            maxLines = 1
+                        )
+                        Text(
+                            text = "1/14 அம்பலக்காரன் பட்டி, ஒத்தங்குடி, மதுரை - 625107",
                             color = Color.White,
                             fontSize = 7.sp,
                             fontWeight = FontWeight.ExtraBold,
-                            textAlign = TextAlign.Center,
-                            maxLines = 1
-                        )
-                        Text(
-                            text = "1/14 அம்பலக்காரன் பட்டி உத்தங்குடி மதுரை 625107",
-                            color = Color.White,
-                            fontSize = 7.sp,
-                            fontWeight = FontWeight.Bold,
                             textAlign = TextAlign.Center,
                             maxLines = 1
                         )
@@ -461,16 +461,16 @@ private fun FrontDetailRow(
             text = "$label :",
             color = OFFICIAL_LABEL_RED,
             fontWeight = FontWeight.Black,
-            fontSize = 9.6.sp,
+            fontSize = 10.sp,
             maxLines = 1,
             softWrap = false
         )
         Spacer(modifier = Modifier.width(3.dp))
         Text(
             text = value,
-            color = Color(0xFF0F172A),
+            color = Color(0xFF000000),
             fontWeight = FontWeight.Black,
-            fontSize = 9.8.sp,
+            fontSize = 10.2.sp,
             maxLines = 1,
             softWrap = false,
             overflow = TextOverflow.Ellipsis,
@@ -493,17 +493,17 @@ private fun BackDetailRow(
             text = "$label :",
             color = OFFICIAL_LABEL_RED,
             fontWeight = FontWeight.Black,
-            fontSize = 9.5.sp,
+            fontSize = 9.8.sp,
             maxLines = 1,
             softWrap = false
         )
         Spacer(modifier = Modifier.width(3.dp))
         Text(
             text = value,
-            color = Color(0xFF111827),
-            fontWeight = FontWeight.ExtraBold,
-            fontSize = if (isAddress) 8.8.sp else 9.6.sp,
-            lineHeight = if (isAddress) 10.5.sp else 11.5.sp,
+            color = Color(0xFF000000),
+            fontWeight = FontWeight.Black,
+            fontSize = if (isAddress) 9.sp else 10.sp,
+            lineHeight = if (isAddress) 11.sp else 12.sp,
             maxLines = if (isAddress) 4 else 1,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f, fill = false)

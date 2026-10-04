@@ -84,17 +84,24 @@ fun ContractorCardView(
                             .padding(horizontal = 4.dp)
                     ) {
                         Text(
-                            text = "தமிழ்நாடு பெயிண்டர்கள் மற்றும் ஓவியர்கள் முன்னேற்ற சங்கம்",
+                            text = "தமிழ்நாடு பெயிண்டர்கள் மற்றும் ஓவியர்கள்",
                             color = Color.White,
-                            fontSize = 10.5.sp,
-                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 11.2.sp,
+                            fontWeight = FontWeight.Black,
+                            textAlign = TextAlign.Center
+                        )
+                        Text(
+                            text = "முன்னேற்ற சங்கம்",
+                            color = Color(0xFFFFEB3B),
+                            fontSize = 12.5.sp,
+                            fontWeight = FontWeight.Black,
                             textAlign = TextAlign.Center
                         )
                         Text(
                             text = "அங்கீகரிக்கப்பட்ட பெயிண்டிங் ஒப்பந்ததாரர் அட்டை",
-                            color = Color(0xFFFFD700),
-                            fontSize = 9.sp,
-                            fontWeight = FontWeight.Black,
+                            color = Color.White,
+                            fontSize = 8.5.sp,
+                            fontWeight = FontWeight.ExtraBold,
                             textAlign = TextAlign.Center
                         )
                     }
@@ -252,9 +259,9 @@ private fun ContractorDataRow(
         )
         Text(
             text = value,
-            color = Color(0xFF111827),
-            fontWeight = FontWeight.Bold,
-            fontSize = 10.sp,
+            color = Color(0xFF000000),
+            fontWeight = FontWeight.Black,
+            fontSize = 10.2.sp,
             maxLines = 1
         )
     }

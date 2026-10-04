@@ -128,9 +128,9 @@ fun PaymentUtrDialog(
                             Spacer(modifier = Modifier.width(10.dp))
                             Column {
                                 Text(
-                                    text = "கட்டணம் & UTR பதிவு",
+                                    text = if (card.cardType == "EXECUTIVE") "பொறுப்பாளர் அட்டை கட்டணம் & UTR" else "உறுப்பினர் அட்டை கட்டணம் & UTR",
                                     color = Color.White,
-                                    fontSize = 15.sp,
+                                    fontSize = 14.5.sp,
                                     fontWeight = FontWeight.ExtraBold
                                 )
                                 Text(
@@ -163,8 +163,18 @@ fun PaymentUtrDialog(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Column {
-                                Text(text = card.name, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFF1E293B))
-                                Text(text = "${card.memberId} | ${card.district}", fontSize = 11.sp, color = UnionRed, fontWeight = FontWeight.Bold)
+                                Text(
+                                    text = card.name.ifBlank { "விண்ணப்பதாரர்" },
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = Color(0xFF1E293B)
+                                )
+                                Text(
+                                    text = "${card.memberId} | ${card.district} • ${if (card.cardType == "EXECUTIVE") "பொறுப்பாளர் அட்டை" else "உறுப்பினர் அட்டை"}",
+                                    fontSize = 11.sp,
+                                    color = UnionRed,
+                                    fontWeight = FontWeight.Bold
+                                )
                             }
                             Text(
                                 text = "₹100",

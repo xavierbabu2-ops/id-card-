@@ -71,7 +71,8 @@ object AadhaarOcrParser {
         val fatherRegex = Regex("(?:S/O|D/O|W/O|C/O|த/பெ|க/பெ|Father's Name|Husband's Name)\\s*[:\\.]?\\s*([A-Za-z\\s\\.\\u0B80-\\u0BFF]+)", RegexOption.IGNORE_CASE)
         val matchFather = fatherRegex.find(rawText)
         if (matchFather != null) {
-            fatherName = matchFather.groupValues[1].substringBefore(",").substringBefore("\n").trim()
+            val rawFather = matchFather.groupValues[1].substringBefore(",").substringBefore("\n").trim()
+            fatherName = TamilAadhaarTransliterationHelper.cleanOcrText(rawFather)
         }
 
         // 5. District Detection
@@ -85,12 +86,21 @@ object AadhaarOcrParser {
                 .replace(aadhaarRegex, "")
                 .lines()
                 .map { it.trim() }
-                .filter { it.isNotBlank() && !it.contains("Unique", ignoreCase = true) && !it.contains("Authority", ignoreCase = true) && !it.contains("Government", ignoreCase = true) && !it.contains("ஆதார்", ignoreCase = true) }
+                .filter { line ->
+                    line.isNotBlank() &&
+                    !line.contains("Unique", ignoreCase = true) &&
+                    !line.contains("Authority", ignoreCase = true) &&
+                    !line.contains("Government", ignoreCase = true) &&
+                    !line.contains("ஆதார்", ignoreCase = true) &&
+                    !line.contains("அடையாளம்", ignoreCase = true) &&
+                    !line.contains("Help", ignoreCase = true) &&
+                    !line.contains("1947", ignoreCase = true)
+                }
                 .take(4)
                 .joinToString(", ")
                 .trimEnd(',', ' ')
             if (potentialAddr.length >= 6) {
-                address = potentialAddr
+                address = TamilAadhaarTransliterationHelper.cleanOcrText(potentialAddr)
             }
         }
 
@@ -109,7 +119,8 @@ object AadhaarOcrParser {
                     !line.contains("ஆண்", ignoreCase = true) &&
                     !line.contains("பெண்", ignoreCase = true) &&
                     !line.contains("ஆதார்", ignoreCase = true) &&
-                    !line.contains("XXXX", ignoreCase = true)
+                    !line.contains("XXXX", ignoreCase = true) &&
+                    !line.contains("Help", ignoreCase = true)
                 ) {
                     if (line.any { it.isDigit() } ||
                         line.contains("தெரு", ignoreCase = true) ||
@@ -121,31 +132,53 @@ object AadhaarOcrParser {
                         line.contains("Nagar", ignoreCase = true) ||
                         line.contains("Village", ignoreCase = true) ||
                         line.contains("Post", ignoreCase = true) ||
-                        line.contains("Taluk", ignoreCase = true)
+                        line.contains("Taluk", ignoreCase = true) ||
+                        line.contains("Dist", ignoreCase = true) ||
+                        line.contains("மாவட்டம்", ignoreCase = true)
                     ) {
                         addrLines.add(line)
                     }
                 }
             }
             if (addrLines.isNotEmpty()) {
-                address = addrLines.take(3).joinToString(", ")
+                address = TamilAadhaarTransliterationHelper.cleanOcrText(addrLines.take(3).joinToString(", "))
             }
         }
 
-        // 7. Name Fallback (Lines before DOB or after Govt header)
-        if (name.isBlank()) {
+        // 7. Name Extraction
+        // Prioritize native Tamil name line if detected
+        val tamilNameLine = lines.firstOrNull { line ->
+            line.any { it in '\u0B80'..'\u0BFF' } &&
+            !line.contains("ஆதார்", ignoreCase = true) &&
+            !line.contains("இந்திய", ignoreCase = true) &&
+            !line.contains("அரசு", ignoreCase = true) &&
+            !line.contains("தேதி", ignoreCase = true) &&
+            !line.contains("முகவரி", ignoreCase = true) &&
+            !line.contains("ஆண்", ignoreCase = true) &&
+            !line.contains("பெண்", ignoreCase = true) &&
+            !line.contains("த/பெ", ignoreCase = true) &&
+            line.length in 3..35 &&
+            !line.any { it.isDigit() }
+        }
+
+        if (tamilNameLine != null) {
+            name = TamilAadhaarTransliterationHelper.cleanOcrText(tamilNameLine)
+        } else {
             for (line in lines) {
                 if (!line.contains("Government", ignoreCase = true) &&
                     !line.contains("Unique", ignoreCase = true) &&
                     !line.contains("Authority", ignoreCase = true) &&
                     !line.contains("DOB", ignoreCase = true) &&
+                    !line.contains("Date of Birth", ignoreCase = true) &&
                     !line.contains("India", ignoreCase = true) &&
-                    !line.contains("ஆதார்", ignoreCase = true) &&
-                    !line.contains("இந்திய", ignoreCase = true) &&
+                    !line.contains("Male", ignoreCase = true) &&
+                    !line.contains("Female", ignoreCase = true) &&
+                    !line.contains("Help", ignoreCase = true) &&
+                    !line.contains("Aadhaar", ignoreCase = true) &&
                     line.length in 4..30 &&
                     !line.any { it.isDigit() }
                 ) {
-                    name = line
+                    name = TamilAadhaarTransliterationHelper.cleanOcrText(line)
                     break
                 }
             }

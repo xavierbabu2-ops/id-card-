@@ -112,14 +112,14 @@ fun ExecutiveCardView(
                         Text(
                             text = "தமிழ்நாடு பெயிண்டர்கள் மற்றும் ஓவியர்கள்",
                             color = Color.White,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 11.5.sp,
+                            fontWeight = FontWeight.Black,
                             textAlign = TextAlign.Center
                         )
                         Text(
                             text = "முன்னேற்ற சங்கம்",
-                            color = Color(0xFFFFD700),
-                            fontSize = 13.sp,
+                            color = Color(0xFFFFEB3B),
+                            fontSize = 13.5.sp,
                             fontWeight = FontWeight.Black,
                             textAlign = TextAlign.Center
                         )

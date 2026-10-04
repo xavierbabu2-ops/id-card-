@@ -22,9 +22,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FilterList
@@ -84,6 +86,7 @@ fun DistrictDirectoryScreen(
     cards: List<MemberCardEntity>,
     onSelectCardForPreview: (MemberCardEntity) -> Unit,
     onSelectCardForEdit: (MemberCardEntity) -> Unit,
+    onAddNewCardForDistrict: ((String) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -275,6 +278,40 @@ fun DistrictDirectoryScreen(
                                     color = UnionRed,
                                     fontWeight = FontWeight.Bold
                                 )
+                            }
+                        }
+                    }
+
+                    item {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            if (onAddNewCardForDistrict != null) {
+                                Button(
+                                    onClick = { onAddNewCardForDistrict(districtName) },
+                                    colors = ButtonDefaults.buttonColors(containerColor = UnionRed),
+                                    shape = RoundedCornerShape(8.dp),
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("புதிய அட்டை", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                }
+                            }
+
+                            if (districtCards.isNotEmpty()) {
+                                OutlinedButton(
+                                    onClick = {
+                                        shareDistrictReport(context, districtName, districtCards)
+                                    },
+                                    shape = RoundedCornerShape(8.dp),
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Icon(Icons.Default.Description, contentDescription = null, tint = UnionNavy, modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("மாவட்ட அறிக்கை", fontSize = 11.sp, color = UnionNavy, fontWeight = FontWeight.Bold)
+                                }
                             }
                         }
                     }
@@ -503,5 +540,41 @@ private fun DistrictSingleMemberCard(
                 }
             }
         }
+    }
+}
+
+private fun shareDistrictReport(
+    context: Context,
+    districtName: String,
+    cards: List<MemberCardEntity>
+) {
+    try {
+        val sdf = java.text.SimpleDateFormat("dd/MM/yyyy hh:mm a", java.util.Locale.getDefault())
+        val distCode = com.example.util.DistrictCodeHelper.getDistrictCode(districtName)
+        val sb = StringBuilder()
+        sb.append("தமிழ்நாடு பெயிண்டர்கள் மற்றும் ஓவியர்கள் முன்னேற்ற சங்கம்\n")
+        sb.append("$districtName மாவட்டம் ($distCode) - உறுப்பினர் பட்டியல் அறிக்கை\n")
+        sb.append("தேதி: ${sdf.format(java.util.Date())}\n")
+        sb.append("மொத்த அடையாள அட்டைகள்: ${cards.size}\n")
+        sb.append("=========================================\n\n")
+
+        cards.forEachIndexed { index, card ->
+            val status = if (card.approvalStatus == "APPROVED") "அங்கீகரிக்கப்பட்டது ✓" else "ஒப்புதலுக்கு காத்திருக்கிறது ⏳"
+            sb.append("${index + 1}. [${card.memberId}] ${card.name}\n")
+            sb.append("   - தொழில்: ${card.jobTitle}\n")
+            sb.append("   - தொலைபேசி: ${card.phone}\n")
+            sb.append("   - முகவரி: ${card.address}\n")
+            sb.append("   - நிலை: $status\n\n")
+        }
+
+        val sendIntent = android.content.Intent().apply {
+            action = android.content.Intent.ACTION_SEND
+            putExtra(android.content.Intent.EXTRA_TEXT, sb.toString())
+            type = "text/plain"
+        }
+        context.startActivity(android.content.Intent.createChooser(sendIntent, "$districtName மாவட்ட உறுப்பினர் அறிக்கை"))
+    } catch (e: Exception) {
+        e.printStackTrace()
+        android.widget.Toast.makeText(context, "அறிக்கை பகிர்வதில் பிழை ஏற்பட்டது.", android.widget.Toast.LENGTH_SHORT).show()
     }
 }
