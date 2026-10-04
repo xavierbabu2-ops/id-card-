@@ -33,8 +33,10 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.DocumentScanner
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.LocationCity
 import androidx.compose.material.icons.filled.PhotoLibrary
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -72,6 +74,7 @@ import com.example.ui.theme.UnionRed
 import com.example.util.AadhaarOcrEngine
 import com.example.util.AadhaarOcrParser
 import com.example.util.DistrictCodeHelper
+import com.example.util.TamilAadhaarTransliterationHelper
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -90,7 +93,10 @@ data class AadhaarExtractedData(
 @Composable
 fun AadhaarScannerDialog(
     currentCard: MemberCardEntity,
+    initialTamilMode: Boolean = true,
+    onLanguageModeChange: ((Boolean) -> Unit)? = null,
     onAadhaarDataExtracted: (MemberCardEntity) -> Unit,
+    onOpenSettings: (() -> Unit)? = null,
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
@@ -100,6 +106,27 @@ fun AadhaarScannerDialog(
     var isScanning by remember { mutableStateOf(false) }
     var manualAadhaarText by remember { mutableStateOf("") }
     var extractedData by remember { mutableStateOf<AadhaarExtractedData?>(null) }
+    var isTamilMode by remember { mutableStateOf(initialTamilMode) }
+
+    fun mapToExtractedData(parsed: com.example.util.AadhaarOcrResult, inTamil: Boolean): AadhaarExtractedData {
+        val finalName = if (inTamil) TamilAadhaarTransliterationHelper.transliterateNameToTamil(parsed.name) else parsed.name
+        val finalFather = if (inTamil) TamilAadhaarTransliterationHelper.transliterateNameToTamil(parsed.fatherName) else parsed.fatherName
+        val finalGender = if (inTamil) TamilAadhaarTransliterationHelper.translateGenderToTamil(parsed.gender) else parsed.gender
+        val finalDistrict = if (inTamil) TamilAadhaarTransliterationHelper.translateDistrictToTamil(parsed.district) else parsed.district
+        val finalAddress = if (inTamil) TamilAadhaarTransliterationHelper.convertAddressToTamil(parsed.address) else parsed.address
+
+        return AadhaarExtractedData(
+            name = finalName.ifBlank { currentCard.name },
+            fatherName = finalFather.ifBlank { currentCard.fatherName },
+            age = parsed.age.ifBlank { currentCard.age },
+            dob = parsed.dob,
+            gender = finalGender,
+            address = finalAddress.ifBlank { currentCard.address },
+            district = finalDistrict.ifBlank { currentCard.district },
+            aadhaarNumber = parsed.aadhaarNumber,
+            memberId = parsed.generatedMemberId
+        )
+    }
 
     // Camera Launcher
     val cameraLauncher = rememberLauncherForActivityResult(
@@ -112,17 +139,7 @@ fun AadhaarScannerDialog(
                 if (ocrText.isNotBlank()) {
                     manualAadhaarText = ocrText
                     val parsed = AadhaarOcrParser.parseAadhaarText(ocrText, currentCard.cardType)
-                    extractedData = AadhaarExtractedData(
-                        name = parsed.name.ifBlank { currentCard.name },
-                        fatherName = parsed.fatherName.ifBlank { currentCard.fatherName },
-                        age = parsed.age.ifBlank { currentCard.age },
-                        dob = parsed.dob,
-                        gender = parsed.gender,
-                        address = parsed.address.ifBlank { currentCard.address },
-                        district = parsed.district.ifBlank { currentCard.district },
-                        aadhaarNumber = parsed.aadhaarNumber,
-                        memberId = parsed.generatedMemberId
-                    )
+                    extractedData = mapToExtractedData(parsed, isTamilMode)
                     Toast.makeText(context, "ஆதார் கார்டு தகவல்கள் வெற்றிகரமாகப் பெறப்பட்டது!", Toast.LENGTH_SHORT).show()
                 } else {
                     Toast.makeText(context, "படத்தில் எழுத்துக்கள் தெளிவாக இல்லை. மீண்டும் படம் எடுக்கவும் அல்லது கீழே தட்டச்சு செய்யவும்.", Toast.LENGTH_LONG).show()
@@ -144,17 +161,7 @@ fun AadhaarScannerDialog(
                 if (ocrText.isNotBlank()) {
                     manualAadhaarText = ocrText
                     val parsed = AadhaarOcrParser.parseAadhaarText(ocrText, currentCard.cardType)
-                    extractedData = AadhaarExtractedData(
-                        name = parsed.name.ifBlank { currentCard.name },
-                        fatherName = parsed.fatherName.ifBlank { currentCard.fatherName },
-                        age = parsed.age.ifBlank { currentCard.age },
-                        dob = parsed.dob,
-                        gender = parsed.gender,
-                        address = parsed.address.ifBlank { currentCard.address },
-                        district = parsed.district.ifBlank { currentCard.district },
-                        aadhaarNumber = parsed.aadhaarNumber,
-                        memberId = parsed.generatedMemberId
-                    )
+                    extractedData = mapToExtractedData(parsed, isTamilMode)
                     Toast.makeText(context, "ஆதார் கார்டு தகவல்கள் பெறப்பட்டது!", Toast.LENGTH_SHORT).show()
                 } else {
                     Toast.makeText(context, "படத்தில் உள்ள எழுத்துக்கள் தெளிவாக இல்லை. மீண்டும் படம் தேர்வு செய்யவும்.", Toast.LENGTH_LONG).show()
@@ -223,8 +230,96 @@ fun AadhaarScannerDialog(
                             }
                         }
 
-                        IconButton(onClick = onDismiss) {
-                            Icon(Icons.Default.Close, contentDescription = "Close", tint = Color.White)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            if (onOpenSettings != null) {
+                                IconButton(onClick = {
+                                    onDismiss()
+                                    onOpenSettings()
+                                }) {
+                                    Icon(Icons.Default.Settings, contentDescription = "Settings", tint = Color.White)
+                                }
+                            }
+                            IconButton(onClick = onDismiss) {
+                                Icon(Icons.Default.Close, contentDescription = "Close", tint = Color.White)
+                            }
+                        }
+                    }
+                }
+
+                // Language Selector Bar
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color(0xFFF1F5F9))
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Language,
+                            contentDescription = null,
+                            tint = UnionNavy,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "ஆதார் மொழி (Aadhaar Language):",
+                            fontSize = 11.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF334155)
+                        )
+                    }
+
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(if (isTamilMode) UnionRed else Color.White)
+                                .clickable {
+                                    isTamilMode = true
+                                    onLanguageModeChange?.invoke(true)
+                                    if (extractedData != null) {
+                                        val d = extractedData!!
+                                        extractedData = d.copy(
+                                            name = TamilAadhaarTransliterationHelper.transliterateNameToTamil(d.name),
+                                            fatherName = TamilAadhaarTransliterationHelper.transliterateNameToTamil(d.fatherName),
+                                            gender = TamilAadhaarTransliterationHelper.translateGenderToTamil(d.gender),
+                                            district = TamilAadhaarTransliterationHelper.translateDistrictToTamil(d.district),
+                                            address = TamilAadhaarTransliterationHelper.convertAddressToTamil(d.address)
+                                        )
+                                    }
+                                }
+                                .padding(horizontal = 10.dp, vertical = 4.dp)
+                        ) {
+                            Text(
+                                text = "தமிழ்",
+                                color = if (isTamilMode) Color.White else Color(0xFF334155),
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(if (!isTamilMode) UnionNavy else Color.White)
+                                .clickable {
+                                    isTamilMode = false
+                                    onLanguageModeChange?.invoke(false)
+                                    if (manualAadhaarText.isNotBlank()) {
+                                        val parsed = AadhaarOcrParser.parseAadhaarText(manualAadhaarText, currentCard.cardType)
+                                        extractedData = mapToExtractedData(parsed, false)
+                                    }
+                                }
+                                .padding(horizontal = 10.dp, vertical = 4.dp)
+                        ) {
+                            Text(
+                                text = "English",
+                                color = if (!isTamilMode) Color.White else Color(0xFF334155),
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
                         }
                     }
                 }
@@ -320,17 +415,7 @@ fun AadhaarScannerDialog(
                             onClick = {
                                 if (manualAadhaarText.isNotBlank()) {
                                     val parsed = AadhaarOcrParser.parseAadhaarText(manualAadhaarText, currentCard.cardType)
-                                    extractedData = AadhaarExtractedData(
-                                        name = parsed.name.ifBlank { currentCard.name },
-                                        fatherName = parsed.fatherName.ifBlank { currentCard.fatherName },
-                                        age = parsed.age.ifBlank { currentCard.age },
-                                        dob = parsed.dob,
-                                        gender = parsed.gender,
-                                        address = parsed.address.ifBlank { manualAadhaarText.trim() },
-                                        district = parsed.district.ifBlank { currentCard.district },
-                                        aadhaarNumber = parsed.aadhaarNumber,
-                                        memberId = parsed.generatedMemberId
-                                    )
+                                    extractedData = mapToExtractedData(parsed, isTamilMode)
                                 } else {
                                     Toast.makeText(context, "முகவரியை உள்ளிடவும் அல்லது கேமரா மூலம் ஸ்கேன் செய்யவும்", Toast.LENGTH_SHORT).show()
                                 }

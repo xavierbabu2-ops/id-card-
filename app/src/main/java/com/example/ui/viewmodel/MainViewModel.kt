@@ -1,6 +1,7 @@
 package com.example.ui.viewmodel
 
 import android.app.Application
+import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.data.AppDatabase
@@ -8,6 +9,7 @@ import com.example.data.MemberCardEntity
 import com.example.data.MemberCardRepository
 import com.example.ui.components.CardFace
 import com.example.util.DistrictCodeHelper
+import com.example.util.TamilAadhaarTransliterationHelper
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -79,6 +81,20 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _showAadhaarScannerDialog = MutableStateFlow(false)
     val showAadhaarScannerDialog: StateFlow<Boolean> = _showAadhaarScannerDialog.asStateFlow()
 
+    private val prefs = application.getSharedPreferences("app_settings_tnpa", Context.MODE_PRIVATE)
+
+    private val _showSettingsDialog = MutableStateFlow(false)
+    val showSettingsDialog: StateFlow<Boolean> = _showSettingsDialog.asStateFlow()
+
+    private val _autoCropPhoto = MutableStateFlow(prefs.getBoolean("auto_crop_photo", true))
+    val autoCropPhoto: StateFlow<Boolean> = _autoCropPhoto.asStateFlow()
+
+    private val _photoAspectRatio = MutableStateFlow(prefs.getString("photo_aspect_ratio", "3:4") ?: "3:4")
+    val photoAspectRatio: StateFlow<String> = _photoAspectRatio.asStateFlow()
+
+    private val _aadhaarAutoTamil = MutableStateFlow(prefs.getBoolean("aadhaar_auto_tamil", true))
+    val aadhaarAutoTamil: StateFlow<Boolean> = _aadhaarAutoTamil.asStateFlow()
+
     private val _showCameraScreen = MutableStateFlow(false)
     val showCameraScreen: StateFlow<Boolean> = _showCameraScreen.asStateFlow()
 
@@ -138,8 +154,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun applyAadhaarExtractedCard(updatedCard: MemberCardEntity) {
-        _currentCard.value = updatedCard
-        _snackbarMessage.value = "ஆதார் விபரம் & புதிய அடையாள எண் ${updatedCard.memberId} தானாக பூர்த்தி செய்யப்பட்டது!"
+        val finalCard = if (_aadhaarAutoTamil.value) {
+            updatedCard.copy(
+                name = TamilAadhaarTransliterationHelper.transliterateNameToTamil(updatedCard.name),
+                fatherName = TamilAadhaarTransliterationHelper.transliterateNameToTamil(updatedCard.fatherName),
+                district = TamilAadhaarTransliterationHelper.translateDistrictToTamil(updatedCard.district),
+                address = TamilAadhaarTransliterationHelper.convertAddressToTamil(updatedCard.address)
+            )
+        } else {
+            updatedCard
+        }
+        _currentCard.value = finalCard
+        _snackbarMessage.value = "ஆதார் விபரம் & புதிய அடையாள எண் ${finalCard.memberId} தானாக பூர்த்தி செய்யப்பட்டது!"
     }
 
     fun setCardFace(face: CardFace) {
@@ -193,6 +219,27 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun closeCamera() {
         _showCameraScreen.value = false
+    }
+
+    fun setShowSettingsDialog(show: Boolean) {
+        _showSettingsDialog.value = show
+    }
+
+    fun setAutoCropPhoto(enabled: Boolean) {
+        _autoCropPhoto.value = enabled
+        prefs.edit().putBoolean("auto_crop_photo", enabled).apply()
+        _snackbarMessage.value = if (enabled) "புகைப்படம் மட்டும் தானாக செதுக்குதல் இயக்கப்பட்டது" else "புகைப்பட செதுக்குதல் முடக்கப்பட்டது"
+    }
+
+    fun setPhotoAspectRatio(ratio: String) {
+        _photoAspectRatio.value = ratio
+        prefs.edit().putString("photo_aspect_ratio", ratio).apply()
+    }
+
+    fun setAadhaarAutoTamil(enabled: Boolean) {
+        _aadhaarAutoTamil.value = enabled
+        prefs.edit().putBoolean("aadhaar_auto_tamil", enabled).apply()
+        _snackbarMessage.value = if (enabled) "ஆதார் ஸ்கேன் விவரங்கள் தமிழில் நிரப்பப்படும் (Tamil Auto-Fill ON)" else "ஆதார் ஸ்கேன் விவரங்கள் ஆங்கிலத்தில் நிரப்பப்படும் (English Fill)"
     }
 
     fun clearSnackbarMessage() {

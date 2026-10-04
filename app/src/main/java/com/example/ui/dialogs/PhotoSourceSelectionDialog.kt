@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.PhotoLibrary
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -36,6 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -45,20 +47,31 @@ import com.example.data.MemberCardEntity
 import com.example.ui.components.CardPhotoFrame
 import com.example.ui.theme.UnionNavy
 import com.example.ui.theme.UnionRed
+import com.example.util.PassportPhotoCropper
 
 @Composable
 fun PhotoSourceSelectionDialog(
     card: MemberCardEntity,
+    autoCropPhoto: Boolean = true,
+    photoAspectRatio: String = "3:4",
     onPhotoSelected: (String?) -> Unit,
     onOpenCamera: () -> Unit,
+    onOpenSettings: (() -> Unit)? = null,
     onDismiss: () -> Unit
 ) {
-    // Gallery Launcher
+    val context = LocalContext.current
+
+    // Gallery Launcher with Passport Photo Cropping according to user settings
     val galleryPicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri: Uri? ->
         if (uri != null) {
-            onPhotoSelected(uri.toString())
+            val finalUri = if (autoCropPhoto) {
+                PassportPhotoCropper.cropToPassportFrame(context, uri, photoAspectRatio)
+            } else {
+                uri
+            }
+            onPhotoSelected(finalUri.toString())
             onDismiss()
         }
     }
@@ -162,6 +175,21 @@ fun PhotoSourceSelectionDialog(
                         galleryPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                     }
                 )
+
+                if (onOpenSettings != null) {
+                    Spacer(modifier = Modifier.height(10.dp))
+                    PhotoOptionButton(
+                        icon = Icons.Default.Settings,
+                        iconBg = Color(0xFFFEF3C7),
+                        iconColor = Color(0xFFB45309),
+                        title = "செதுக்குதல் அமைப்புகள் (Crop Settings)",
+                        desc = if (autoCropPhoto) "பாஸ்போர்ட் செதுக்குதல்: இயக்கத்தில் ($photoAspectRatio)" else "செதுக்குதல் முடக்கத்தில் உள்ளது",
+                        onClick = {
+                            onDismiss()
+                            onOpenSettings()
+                        }
+                    )
+                }
 
                 if (card.photoUri != null) {
                     Spacer(modifier = Modifier.height(14.dp))

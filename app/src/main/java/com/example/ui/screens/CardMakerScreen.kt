@@ -34,6 +34,7 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocationCity
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.QrCodeScanner
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.Badge
@@ -74,6 +75,7 @@ import com.example.ui.components.CardFace
 import com.example.ui.components.CardFormEditor
 import com.example.ui.components.FlippableCardContainer
 import com.example.ui.dialogs.AadhaarScannerDialog
+import com.example.ui.dialogs.AppSettingsDialog
 import com.example.ui.dialogs.AssociationInfoDialog
 import com.example.ui.dialogs.CardDownloadExportDialog
 import com.example.ui.dialogs.PaymentUtrDialog
@@ -105,6 +107,10 @@ fun CardMakerScreen(
     val showDownloadDialog by viewModel.showDownloadDialog.collectAsStateWithLifecycle()
     val showPhotoSourceDialog by viewModel.showPhotoSourceDialog.collectAsStateWithLifecycle()
     val showAadhaarScannerDialog by viewModel.showAadhaarScannerDialog.collectAsStateWithLifecycle()
+    val showSettingsDialog by viewModel.showSettingsDialog.collectAsStateWithLifecycle()
+    val autoCropPhoto by viewModel.autoCropPhoto.collectAsStateWithLifecycle()
+    val photoAspectRatio by viewModel.photoAspectRatio.collectAsStateWithLifecycle()
+    val aadhaarAutoTamil by viewModel.aadhaarAutoTamil.collectAsStateWithLifecycle()
     val showCameraScreen by viewModel.showCameraScreen.collectAsStateWithLifecycle()
     val cameraScreenMode by viewModel.cameraScreenMode.collectAsStateWithLifecycle()
     val snackbarMessage by viewModel.snackbarMessage.collectAsStateWithLifecycle()
@@ -159,8 +165,17 @@ fun CardMakerScreen(
         CameraCaptureScreen(
             currentCard = currentCard,
             initialMode = cameraScreenMode,
+            initialAutoCropPhoto = autoCropPhoto,
+            initialPhotoAspectRatio = photoAspectRatio,
+            initialAadhaarInTamil = aadhaarAutoTamil,
             onPhotoCaptured = { uri -> viewModel.updateMemberPhoto(uri) },
             onAadhaarScanned = { updated -> viewModel.applyAadhaarExtractedCard(updated) },
+            onSettingsChange = { autoCrop, ratio, tamilMode ->
+                viewModel.setAutoCropPhoto(autoCrop)
+                viewModel.setPhotoAspectRatio(ratio)
+                viewModel.setAadhaarAutoTamil(tamilMode)
+            },
+            onOpenSettings = { viewModel.setShowSettingsDialog(true) },
             onClose = { viewModel.closeCamera() }
         )
         return
@@ -278,6 +293,18 @@ fun CardMakerScreen(
                             Icon(
                                 imageVector = Icons.Default.Info,
                                 contentDescription = "Association Info",
+                                tint = Color.White
+                            )
+                        }
+
+                        // App Settings (Camera & Aadhaar Options)
+                        IconButton(
+                            onClick = { viewModel.setShowSettingsDialog(true) },
+                            modifier = Modifier.testTag("action_app_settings")
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Settings,
+                                contentDescription = "Settings",
                                 tint = Color.White
                             )
                         }
@@ -493,7 +520,9 @@ fun CardMakerScreen(
                             onSave = { viewModel.saveCurrentCard() },
                             onReset = { viewModel.resetToNewCard(currentCard.cardType) },
                             onOpenPayment = { viewModel.setShowPaymentDialog(true) },
-                            onOpenAadhaarScan = { viewModel.openCamera(CameraMode.AADHAAR_SCAN) }
+                            onOpenAadhaarScan = { viewModel.openCamera(CameraMode.AADHAAR_SCAN) },
+                            onOpenPhotoPicker = { viewModel.setShowPhotoSourceDialog(true) },
+                            onOpenSettings = { viewModel.setShowSettingsDialog(true) }
                         )
 
                         Spacer(modifier = Modifier.height(20.dp))
@@ -578,8 +607,11 @@ fun CardMakerScreen(
     if (showPhotoSourceDialog) {
         PhotoSourceSelectionDialog(
             card = currentCard,
+            autoCropPhoto = autoCropPhoto,
+            photoAspectRatio = photoAspectRatio,
             onPhotoSelected = { uri -> viewModel.updateMemberPhoto(uri) },
             onOpenCamera = { viewModel.openCamera(CameraMode.MEMBER_PHOTO) },
+            onOpenSettings = { viewModel.setShowSettingsDialog(true) },
             onDismiss = { viewModel.setShowPhotoSourceDialog(false) }
         )
     }
@@ -587,8 +619,23 @@ fun CardMakerScreen(
     if (showAadhaarScannerDialog) {
         AadhaarScannerDialog(
             currentCard = currentCard,
+            initialTamilMode = aadhaarAutoTamil,
+            onLanguageModeChange = { viewModel.setAadhaarAutoTamil(it) },
             onAadhaarDataExtracted = { updatedCard -> viewModel.applyAadhaarExtractedCard(updatedCard) },
+            onOpenSettings = { viewModel.setShowSettingsDialog(true) },
             onDismiss = { viewModel.setShowAadhaarScannerDialog(false) }
+        )
+    }
+
+    if (showSettingsDialog) {
+        AppSettingsDialog(
+            autoCropPhoto = autoCropPhoto,
+            photoAspectRatio = photoAspectRatio,
+            aadhaarAutoTamil = aadhaarAutoTamil,
+            onAutoCropPhotoChange = { viewModel.setAutoCropPhoto(it) },
+            onPhotoAspectRatioChange = { viewModel.setPhotoAspectRatio(it) },
+            onAadhaarAutoTamilChange = { viewModel.setAadhaarAutoTamil(it) },
+            onDismiss = { viewModel.setShowSettingsDialog(false) }
         )
     }
 }

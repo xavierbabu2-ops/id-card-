@@ -46,13 +46,16 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.CreditCard
+import androidx.compose.material.icons.filled.Crop
 import androidx.compose.material.icons.filled.DocumentScanner
 import androidx.compose.material.icons.filled.Face
 import androidx.compose.material.icons.filled.FlashAuto
 import androidx.compose.material.icons.filled.FlashOff
 import androidx.compose.material.icons.filled.FlashOn
 import androidx.compose.material.icons.filled.FlipCameraAndroid
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.PhotoLibrary
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -103,6 +106,8 @@ import com.example.ui.theme.UnionRed
 import com.example.util.AadhaarOcrEngine
 import com.example.util.AadhaarOcrParser
 import com.example.util.AadhaarOcrResult
+import com.example.util.PassportPhotoCropper
+import com.example.util.TamilAadhaarTransliterationHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -120,8 +125,13 @@ enum class CameraMode {
 fun CameraCaptureScreen(
     currentCard: MemberCardEntity,
     initialMode: CameraMode = CameraMode.MEMBER_PHOTO,
+    initialAutoCropPhoto: Boolean = true,
+    initialPhotoAspectRatio: String = "3:4",
+    initialAadhaarInTamil: Boolean = true,
     onPhotoCaptured: (String) -> Unit,
     onAadhaarScanned: (MemberCardEntity) -> Unit,
+    onSettingsChange: ((Boolean, String, Boolean) -> Unit)? = null,
+    onOpenSettings: (() -> Unit)? = null,
     onClose: () -> Unit
 ) {
     val context = LocalContext.current
@@ -142,6 +152,10 @@ fun CameraCaptureScreen(
     var processingMessage by remember { mutableStateOf("") }
     var extractedOcrResult by remember { mutableStateOf<AadhaarOcrResult?>(null) }
 
+    var autoCropPhoto by remember { mutableStateOf(initialAutoCropPhoto) }
+    var photoAspectRatio by remember { mutableStateOf(initialPhotoAspectRatio) } // "3:4" or "1:1"
+    var aadhaarInTamil by remember { mutableStateOf(initialAadhaarInTamil) }
+
     // Permission Launcher
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -158,8 +172,13 @@ fun CameraCaptureScreen(
     ) { uri: Uri? ->
         if (uri != null) {
             if (cameraMode == CameraMode.MEMBER_PHOTO) {
-                onPhotoCaptured(uri.toString())
-                Toast.makeText(context, "உறுப்பினர் படம் இணைக்கப்பட்டது!", Toast.LENGTH_SHORT).show()
+                val finalUri = if (autoCropPhoto) {
+                    PassportPhotoCropper.cropToPassportFrame(context, uri, photoAspectRatio)
+                } else {
+                    uri
+                }
+                onPhotoCaptured(finalUri.toString())
+                Toast.makeText(context, if (autoCropPhoto) "பாஸ்போர்ட் புகைப்படம் மட்டும் செதுக்கப்பட்டது!" else "உறுப்பினர் படம் இணைக்கப்பட்டது!", Toast.LENGTH_SHORT).show()
                 onClose()
             } else {
                 // Aadhaar Gallery OCR using real ML Kit Text Recognition
@@ -169,7 +188,18 @@ fun CameraCaptureScreen(
                     val ocrText = AadhaarOcrEngine.recognizeTextFromUri(context, uri)
                     if (ocrText.isNotBlank()) {
                         val result = AadhaarOcrParser.parseAadhaarText(ocrText, currentCard.cardType)
-                        extractedOcrResult = result
+                        val finalResult = if (aadhaarInTamil) {
+                            result.copy(
+                                name = TamilAadhaarTransliterationHelper.transliterateNameToTamil(result.name),
+                                fatherName = TamilAadhaarTransliterationHelper.transliterateNameToTamil(result.fatherName),
+                                gender = TamilAadhaarTransliterationHelper.translateGenderToTamil(result.gender),
+                                district = TamilAadhaarTransliterationHelper.translateDistrictToTamil(result.district),
+                                address = TamilAadhaarTransliterationHelper.convertAddressToTamil(result.address)
+                            )
+                        } else {
+                            result
+                        }
+                        extractedOcrResult = finalResult
                         Toast.makeText(context, "ஆதார் அட்டை விவரங்கள் வெற்றிகரமாகப் பெறப்பட்டது!", Toast.LENGTH_SHORT).show()
                     } else {
                         Toast.makeText(context, "படத்தில் எழுத்துக்கள் தெளிவாக இல்லை. மீண்டும் படம் தேர்வு செய்யவும்.", Toast.LENGTH_LONG).show()
@@ -312,7 +342,14 @@ fun CameraCaptureScreen(
                         fontWeight = FontWeight.Bold
                     )
 
-                    Row {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        // Settings shortcut
+                        if (onOpenSettings != null) {
+                            IconButton(onClick = onOpenSettings) {
+                                Icon(Icons.Default.Settings, contentDescription = "Settings", tint = Color.White)
+                            }
+                        }
+
                         // Flash Toggle
                         IconButton(
                             onClick = {
@@ -393,6 +430,113 @@ fun CameraCaptureScreen(
                         }
                     }
                 }
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                // Mode-Specific Real-time Settings Bar
+                if (cameraMode == CameraMode.MEMBER_PHOTO) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color.Black.copy(alpha = 0.55f))
+                            .padding(horizontal = 10.dp, vertical = 5.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Crop, contentDescription = null, tint = Color(0xFFFFD700), modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("பாஸ்போர்ட் செதுக்கல்:", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        }
+
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(if (autoCropPhoto) UnionGreen else Color.Gray)
+                                    .clickable {
+                                        val newAuto = !autoCropPhoto
+                                        autoCropPhoto = newAuto
+                                        onSettingsChange?.invoke(newAuto, photoAspectRatio, aadhaarInTamil)
+                                    }
+                                    .padding(horizontal = 8.dp, vertical = 3.dp)
+                            ) {
+                                Text(
+                                    text = if (autoCropPhoto) "செதுக்கு (ON)" else "முழு படம் (OFF)",
+                                    color = Color.White,
+                                    fontSize = 10.5.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+
+                            if (autoCropPhoto) {
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(if (photoAspectRatio == "3:4") UnionRed else Color.DarkGray)
+                                        .clickable {
+                                            val newRatio = if (photoAspectRatio == "3:4") "1:1" else "3:4"
+                                            photoAspectRatio = newRatio
+                                            onSettingsChange?.invoke(autoCropPhoto, newRatio, aadhaarInTamil)
+                                        }
+                                        .padding(horizontal = 8.dp, vertical = 3.dp)
+                                ) {
+                                    Text(
+                                        text = photoAspectRatio,
+                                        color = Color.White,
+                                        fontSize = 10.5.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color.Black.copy(alpha = 0.55f))
+                            .padding(horizontal = 10.dp, vertical = 5.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Language, contentDescription = null, tint = Color(0xFF60A5FA), modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("ஆதார் மொழி (Language):", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        }
+
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(if (aadhaarInTamil) UnionRed else Color.DarkGray)
+                                    .clickable {
+                                        aadhaarInTamil = true
+                                        onSettingsChange?.invoke(autoCropPhoto, photoAspectRatio, true)
+                                    }
+                                    .padding(horizontal = 8.dp, vertical = 3.dp)
+                            ) {
+                                Text("தமிழ் (Tamil)", color = Color.White, fontSize = 10.5.sp, fontWeight = FontWeight.Bold)
+                            }
+
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(if (!aadhaarInTamil) UnionNavy else Color.DarkGray)
+                                    .clickable {
+                                        aadhaarInTamil = false
+                                        onSettingsChange?.invoke(autoCropPhoto, photoAspectRatio, false)
+                                    }
+                                    .padding(horizontal = 8.dp, vertical = 3.dp)
+                            ) {
+                                Text("English", color = Color.White, fontSize = 10.5.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                }
             }
 
             // BOTTOM SHUTTER & CONTROLS
@@ -461,9 +605,14 @@ fun CameraCaptureScreen(
                                         object : ImageCapture.OnImageSavedCallback {
                                             override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
                                                 isProcessing = false
-                                                val uri = Uri.fromFile(photoFile).toString()
-                                                onPhotoCaptured(uri)
-                                                Toast.makeText(context, "உறுப்பினர் புகைப்படம் இணைக்கப்பட்டது!", Toast.LENGTH_SHORT).show()
+                                                val rawUri = Uri.fromFile(photoFile)
+                                                val finalUri = if (autoCropPhoto) {
+                                                    PassportPhotoCropper.cropToPassportFrame(context, rawUri, photoAspectRatio)
+                                                } else {
+                                                    rawUri
+                                                }
+                                                onPhotoCaptured(finalUri.toString())
+                                                Toast.makeText(context, if (autoCropPhoto) "உறுப்பினரின் புகைப்படம் மட்டும் செதுக்கப்பட்டது!" else "உறுப்பினர் புகைப்படம் இணைக்கப்பட்டது!", Toast.LENGTH_SHORT).show()
                                                 onClose()
                                             }
 
@@ -497,7 +646,18 @@ fun CameraCaptureScreen(
                                                     val ocrText = AadhaarOcrEngine.recognizeTextFromUri(context, uri)
                                                     if (ocrText.isNotBlank()) {
                                                         val ocrResult = AadhaarOcrParser.parseAadhaarText(ocrText, currentCard.cardType)
-                                                        extractedOcrResult = ocrResult
+                                                        val finalResult = if (aadhaarInTamil) {
+                                                            ocrResult.copy(
+                                                                name = TamilAadhaarTransliterationHelper.transliterateNameToTamil(ocrResult.name),
+                                                                fatherName = TamilAadhaarTransliterationHelper.transliterateNameToTamil(ocrResult.fatherName),
+                                                                gender = TamilAadhaarTransliterationHelper.translateGenderToTamil(ocrResult.gender),
+                                                                district = TamilAadhaarTransliterationHelper.translateDistrictToTamil(ocrResult.district),
+                                                                address = TamilAadhaarTransliterationHelper.convertAddressToTamil(ocrResult.address)
+                                                            )
+                                                        } else {
+                                                            ocrResult
+                                                        }
+                                                        extractedOcrResult = finalResult
                                                         Toast.makeText(context, "ஆதார் கார்டு விவரங்கள் பெறப்பட்டது!", Toast.LENGTH_SHORT).show()
                                                     } else {
                                                         Toast.makeText(context, "படத்தில் எழுத்துக்கள் தெளிவாக இல்லை. மீண்டும் நேராகப் படம் எடுக்கவும்.", Toast.LENGTH_LONG).show()
@@ -682,6 +842,49 @@ fun CameraCaptureScreen(
 
                         Spacer(modifier = Modifier.height(14.dp))
                         Divider(color = Color(0xFFE2E8F0))
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        // Language Toggle on Result Dialog
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(Color(0xFFF1F5F9))
+                                .padding(horizontal = 10.dp, vertical = 5.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("மொழி (Language):", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFF475569))
+                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(if (aadhaarInTamil) UnionRed else Color.White)
+                                        .clickable {
+                                            aadhaarInTamil = true
+                                            extractedOcrResult = result.copy(
+                                                name = TamilAadhaarTransliterationHelper.transliterateNameToTamil(result.name),
+                                                fatherName = TamilAadhaarTransliterationHelper.transliterateNameToTamil(result.fatherName),
+                                                district = TamilAadhaarTransliterationHelper.translateDistrictToTamil(result.district),
+                                                address = TamilAadhaarTransliterationHelper.convertAddressToTamil(result.address)
+                                            )
+                                        }
+                                        .padding(horizontal = 10.dp, vertical = 4.dp)
+                                ) {
+                                    Text("தமிழ்", color = if (aadhaarInTamil) Color.White else Color(0xFF334155), fontSize = 10.5.sp, fontWeight = FontWeight.Bold)
+                                }
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(if (!aadhaarInTamil) UnionNavy else Color.White)
+                                        .clickable { aadhaarInTamil = false }
+                                        .padding(horizontal = 10.dp, vertical = 4.dp)
+                                ) {
+                                    Text("English", color = if (!aadhaarInTamil) Color.White else Color(0xFF334155), fontSize = 10.5.sp, fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        }
+
                         Spacer(modifier = Modifier.height(10.dp))
 
                         OcrRow("உறுப்பினர் எண் (Auto ID)", result.generatedMemberId, isHighlight = true)
