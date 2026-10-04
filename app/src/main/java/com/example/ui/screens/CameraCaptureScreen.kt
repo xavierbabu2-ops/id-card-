@@ -73,9 +73,11 @@ import androidx.compose.material3.TabRow
 import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
+import com.example.ui.dialogs.PhotoCropAdjustDialog
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -156,6 +158,24 @@ fun CameraCaptureScreen(
     var autoCropPhoto by remember { mutableStateOf(initialAutoCropPhoto) }
     var photoAspectRatio by remember { mutableStateOf(initialPhotoAspectRatio) } // "3:4" or "1:1"
     var aadhaarInTamil by remember { mutableStateOf(initialAadhaarInTamil) }
+    var isDocumentCropMode by remember { mutableStateOf(true) }
+    var zoomLevel by remember { mutableFloatStateOf(1f) }
+    var cameraControlInstance by remember { mutableStateOf<androidx.camera.core.CameraControl?>(null) }
+    var pendingCropUri by remember { mutableStateOf<Uri?>(null) }
+
+    // If an image was captured or picked for member photo, show interactive cropper
+    if (pendingCropUri != null) {
+        PhotoCropAdjustDialog(
+            sourceUri = pendingCropUri!!,
+            photoAspectRatio = photoAspectRatio,
+            onCropConfirmed = { croppedUri ->
+                onPhotoCaptured(croppedUri)
+                pendingCropUri = null
+                onClose()
+            },
+            onDismiss = { pendingCropUri = null }
+        )
+    }
 
     // Permission Launcher
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -173,20 +193,14 @@ fun CameraCaptureScreen(
     ) { uri: Uri? ->
         if (uri != null) {
             if (cameraMode == CameraMode.MEMBER_PHOTO) {
-                val finalUri = if (autoCropPhoto) {
-                    PassportPhotoCropper.cropToPassportFrame(context, uri, photoAspectRatio)
-                } else {
-                    uri
-                }
-                onPhotoCaptured(finalUri.toString())
-                Toast.makeText(context, if (autoCropPhoto) "பாஸ்போர்ட் புகைப்படம் மட்டும் செதுக்கப்பட்டது!" else "உறுப்பினர் படம் இணைக்கப்பட்டது!", Toast.LENGTH_SHORT).show()
-                onClose()
+                pendingCropUri = uri
             } else {
                 // Aadhaar Gallery OCR using real ML Kit Text Recognition
                 isProcessing = true
                 processingMessage = "ஆதார் கார்டு படம் ஸ்கேன் செய்யப்படுகிறது..."
                 scope.launch {
                     val ocrText = AadhaarOcrEngine.recognizeTextFromUri(context, uri)
+                    val faceUri = PassportPhotoCropper.extractFaceFromDocument(context, uri)
                     if (ocrText.isNotBlank()) {
                         val result = AadhaarOcrParser.parseAadhaarText(ocrText, currentCard.cardType)
                         val finalResult = if (aadhaarInTamil) {
@@ -200,9 +214,11 @@ fun CameraCaptureScreen(
                         } else {
                             result
                         }
-                        val updatedCard = AadhaarOcrParser.applyToMemberCard(currentCard, finalResult)
+                        val updatedCard = AadhaarOcrParser.applyToMemberCard(currentCard, finalResult).let { card ->
+                            if (faceUri != null) card.copy(photoUri = faceUri.toString()) else card
+                        }
                         onAadhaarScanned(updatedCard)
-                        Toast.makeText(context, "ஆதார் அட்டை விவரங்கள் படிவத்தில் தானாக நிரப்பப்பட்டது!", Toast.LENGTH_LONG).show()
+                        Toast.makeText(context, if (faceUri != null) "ஆதார் விவரங்கள் & புகைப்படம் படிவத்தில் தானாக நிரப்பப்பட்டது!" else "ஆதார் அட்டை விவரங்கள் படிவத்தில் தானாக நிரப்பப்பட்டது!", Toast.LENGTH_LONG).show()
                         onClose()
                     } else {
                         Toast.makeText(context, "படத்தில் எழுத்துக்கள் தெளிவாக இல்லை. மீண்டும் படம் தேர்வு செய்யவும்.", Toast.LENGTH_LONG).show()
@@ -253,12 +269,13 @@ fun CameraCaptureScreen(
 
                         try {
                             cameraProvider.unbindAll()
-                            cameraProvider.bindToLifecycle(
+                            val cam = cameraProvider.bindToLifecycle(
                                 lifecycleOwner,
                                 cameraSelector,
                                 preview,
                                 capture
                             )
+                            cameraControlInstance = cam.cameraControl
                         } catch (e: Exception) {
                             e.printStackTrace()
                         }
@@ -274,9 +291,9 @@ fun CameraCaptureScreen(
                 val canvasHeight = size.height
 
                 if (cameraMode == CameraMode.MEMBER_PHOTO) {
-                    // Portrait Passport Guide Frame
-                    val ovalWidth = canvasWidth * 0.65f
-                    val ovalHeight = ovalWidth * 1.3f
+                    // Portrait Passport Guide Frame (Adjusted based on isDocumentCropMode)
+                    val ovalWidth = if (isDocumentCropMode) canvasWidth * 0.48f else canvasWidth * 0.62f
+                    val ovalHeight = ovalWidth * (if (photoAspectRatio == "1:1") 1.0f else 1.33f)
                     val left = (canvasWidth - ovalWidth) / 2f
                     val top = (canvasHeight - ovalHeight) / 2f - 40f
 
@@ -284,9 +301,25 @@ fun CameraCaptureScreen(
                         color = Color(0xFFFFD700),
                         topLeft = Offset(left, top),
                         size = Size(ovalWidth, ovalHeight),
-                        cornerRadius = CornerRadius(40f, 40f),
-                        style = Stroke(width = 4f)
+                        cornerRadius = CornerRadius(24f, 24f),
+                        style = Stroke(width = 4.5f)
                     )
+
+                    // Corner Accent Marks for golden viewfinder
+                    val markLength = 26f
+                    val stroke = 6f
+                    // Top-Left
+                    drawLine(Color(0xFFFFD700), Offset(left, top), Offset(left + markLength, top), stroke)
+                    drawLine(Color(0xFFFFD700), Offset(left, top), Offset(left, top + markLength), stroke)
+                    // Top-Right
+                    drawLine(Color(0xFFFFD700), Offset(left + ovalWidth, top), Offset(left + ovalWidth - markLength, top), stroke)
+                    drawLine(Color(0xFFFFD700), Offset(left + ovalWidth, top), Offset(left + ovalWidth, top + markLength), stroke)
+                    // Bottom-Left
+                    drawLine(Color(0xFFFFD700), Offset(left, top + ovalHeight), Offset(left + markLength, top + ovalHeight), stroke)
+                    drawLine(Color(0xFFFFD700), Offset(left, top + ovalHeight), Offset(left, top + ovalHeight - markLength), stroke)
+                    // Bottom-Right
+                    drawLine(Color(0xFFFFD700), Offset(left + ovalWidth, top + ovalHeight), Offset(left + ovalWidth - markLength, top + ovalHeight), stroke)
+                    drawLine(Color(0xFFFFD700), Offset(left + ovalWidth, top + ovalHeight), Offset(left + ovalWidth, top + markLength), stroke)
                 } else {
                     // Aadhaar Card Guide Frame (Standard Credit/Aadhaar aspect ratio 1.58f)
                     val cardWidth = canvasWidth * 0.88f
@@ -547,14 +580,105 @@ fun CameraCaptureScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .align(Alignment.BottomCenter)
-                    .background(Color.Black.copy(alpha = 0.6f))
-                    .padding(horizontal = 24.dp, vertical = 20.dp),
+                    .background(Color.Black.copy(alpha = 0.65f))
+                    .padding(horizontal = 20.dp, vertical = 14.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                if (cameraMode == CameraMode.MEMBER_PHOTO) {
+                    // Document Crop vs Live Portrait Mode Toggle
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(20.dp))
+                                .background(if (isDocumentCropMode) UnionAmber else Color(0xFF334155))
+                                .clickable {
+                                    isDocumentCropMode = true
+                                    zoomLevel = 2f
+                                    cameraControlInstance?.setZoomRatio(2f)
+                                }
+                                .padding(horizontal = 12.dp, vertical = 5.dp)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Default.Crop, contentDescription = null, tint = if (isDocumentCropMode) Color.Black else Color.White, modifier = Modifier.size(13.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    "விண்ணப்ப படிவ போட்டோ",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isDocumentCropMode) Color.Black else Color.White
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(20.dp))
+                                .background(if (!isDocumentCropMode) UnionRed else Color(0xFF334155))
+                                .clickable {
+                                    isDocumentCropMode = false
+                                    zoomLevel = 1f
+                                    cameraControlInstance?.setZoomRatio(1f)
+                                }
+                                .padding(horizontal = 12.dp, vertical = 5.dp)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Default.Face, contentDescription = null, tint = Color.White, modifier = Modifier.size(13.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    "நேரடி நபர் படம்",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
+                            }
+                        }
+                    }
+
+                    // Zoom Selector
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    ) {
+                        listOf(1f to "1x", 1.5f to "1.5x", 2f to "2x (படிவம்)", 3f to "3x").forEach { (z, label) ->
+                            val isSelected = zoomLevel == z
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(14.dp))
+                                    .background(if (isSelected) UnionAmber else Color.Black.copy(alpha = 0.5f))
+                                    .clickable {
+                                        zoomLevel = z
+                                        cameraControlInstance?.setZoomRatio(z)
+                                    }
+                                    .padding(horizontal = 10.dp, vertical = 4.dp)
+                            ) {
+                                Text(
+                                    text = label,
+                                    color = if (isSelected) Color.Black else Color.White,
+                                    fontSize = 10.5.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    }
+                }
+
                 // Hint Text
                 Text(
                     text = if (cameraMode == CameraMode.MEMBER_PHOTO) {
-                        "உறுப்பினரின் முகத்தை மஞ்சள் வட்டத்தில் வைத்து படம் எடுக்கவும்"
+                        if (isDocumentCropMode) {
+                            "விண்ணப்ப படிவம் / ஆதாரில் உள்ள போட்டோவை மட்டும் தங்க கட்டத்திற்குள் வைக்கவும் (ஆட்டோ ஃபேஸ் க்ராப்)"
+                        } else {
+                            "உறுப்பினரின் முகத்தை மஞ்சள் கட்டத்தில் வைத்து படம் எடுக்கவும்"
+                        }
                     } else {
                         "ஆதார் கார்டை பச்சை கட்டத்திற்குள் வைத்து ஸ்கேன் செய்யவும்"
                     },
@@ -563,7 +687,7 @@ fun CameraCaptureScreen(
                     textAlign = TextAlign.Center
                 )
 
-                Spacer(modifier = Modifier.height(14.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -598,7 +722,6 @@ fun CameraCaptureScreen(
 
                                 if (cameraMode == CameraMode.MEMBER_PHOTO) {
                                     processingMessage = "புகைப்படம் சேமிக்கப்படுகிறது..."
-                                    // Capture member photo
                                     val photoFile = File(context.cacheDir, "member_${System.currentTimeMillis()}.jpg")
                                     val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
 
@@ -609,14 +732,7 @@ fun CameraCaptureScreen(
                                             override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
                                                 isProcessing = false
                                                 val rawUri = Uri.fromFile(photoFile)
-                                                val finalUri = if (autoCropPhoto) {
-                                                    PassportPhotoCropper.cropToPassportFrame(context, rawUri, photoAspectRatio)
-                                                } else {
-                                                    rawUri
-                                                }
-                                                onPhotoCaptured(finalUri.toString())
-                                                Toast.makeText(context, if (autoCropPhoto) "உறுப்பினரின் புகைப்படம் மட்டும் செதுக்கப்பட்டது!" else "உறுப்பினர் புகைப்படம் இணைக்கப்பட்டது!", Toast.LENGTH_SHORT).show()
-                                                onClose()
+                                                pendingCropUri = rawUri
                                             }
 
                                             override fun onError(exception: ImageCaptureException) {
@@ -625,7 +741,6 @@ fun CameraCaptureScreen(
                                             }
                                         }
                                     ) ?: run {
-                                        // Fallback if camera capture is not ready (e.g. emulator preview)
                                         scope.launch {
                                             delay(600)
                                             isProcessing = false
@@ -647,6 +762,7 @@ fun CameraCaptureScreen(
                                                 scope.launch {
                                                     val uri = Uri.fromFile(aadhaarFile)
                                                     val ocrText = AadhaarOcrEngine.recognizeTextFromUri(context, uri)
+                                                    val faceUri = PassportPhotoCropper.extractFaceFromDocument(context, uri)
                                                     if (ocrText.isNotBlank()) {
                                                         val ocrResult = AadhaarOcrParser.parseAadhaarText(ocrText, currentCard.cardType)
                                                         val finalResult = if (aadhaarInTamil) {
@@ -660,9 +776,11 @@ fun CameraCaptureScreen(
                                                         } else {
                                                             ocrResult
                                                         }
-                                                        val updatedCard = AadhaarOcrParser.applyToMemberCard(currentCard, finalResult)
+                                                        val updatedCard = AadhaarOcrParser.applyToMemberCard(currentCard, finalResult).let { card ->
+                                                            if (faceUri != null) card.copy(photoUri = faceUri.toString()) else card
+                                                        }
                                                         onAadhaarScanned(updatedCard)
-                                                        Toast.makeText(context, "ஆதார் விவரங்கள் படிவத்தில் தானாக நிரப்பப்பட்டது!", Toast.LENGTH_LONG).show()
+                                                        Toast.makeText(context, if (faceUri != null) "ஆதார் விவரங்கள் & புகைப்படம் படிவத்தில் தானாக நிரப்பப்பட்டது!" else "ஆதார் விவரங்கள் படிவத்தில் தானாக நிரப்பப்பட்டது!", Toast.LENGTH_LONG).show()
                                                         onClose()
                                                     } else {
                                                         Toast.makeText(context, "படத்தில் எழுத்துக்கள் தெளிவாக இல்லை. மீண்டும் நேராகப் படம் எடுக்கவும்.", Toast.LENGTH_LONG).show()

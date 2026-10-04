@@ -5,7 +5,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,7 +21,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Crop
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
@@ -32,12 +33,15 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -45,9 +49,9 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.example.data.MemberCardEntity
 import com.example.ui.components.CardPhotoFrame
+import com.example.ui.theme.UnionGreen
 import com.example.ui.theme.UnionNavy
 import com.example.ui.theme.UnionRed
-import com.example.util.PassportPhotoCropper
 
 @Composable
 fun PhotoSourceSelectionDialog(
@@ -59,21 +63,29 @@ fun PhotoSourceSelectionDialog(
     onOpenSettings: (() -> Unit)? = null,
     onDismiss: () -> Unit
 ) {
-    val context = LocalContext.current
+    // If user picks an image from gallery or wants to adjust current photo, open PhotoCropAdjustDialog
+    var pendingCropUri by remember { mutableStateOf<Uri?>(null) }
 
-    // Gallery Launcher with Passport Photo Cropping according to user settings
     val galleryPicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri: Uri? ->
         if (uri != null) {
-            val finalUri = if (autoCropPhoto) {
-                PassportPhotoCropper.cropToPassportFrame(context, uri, photoAspectRatio)
-            } else {
-                uri
-            }
-            onPhotoSelected(finalUri.toString())
-            onDismiss()
+            pendingCropUri = uri
         }
+    }
+
+    if (pendingCropUri != null) {
+        PhotoCropAdjustDialog(
+            sourceUri = pendingCropUri!!,
+            photoAspectRatio = photoAspectRatio,
+            onCropConfirmed = { croppedUriString ->
+                onPhotoSelected(croppedUriString)
+                pendingCropUri = null
+                onDismiss()
+            },
+            onDismiss = { pendingCropUri = null }
+        )
+        return
     }
 
     Dialog(onDismissRequest = onDismiss) {
@@ -137,13 +149,29 @@ fun PhotoSourceSelectionDialog(
                         borderWidth = 1.5.dp
                     )
                     Spacer(modifier = Modifier.width(12.dp))
-                    Column {
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(text = card.name, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1E293B))
                         Text(
                             text = if (card.photoUri != null) "புகைப்படம் இணைக்கப்பட்டுள்ளது" else "புகைப்படம் இன்னும் சேர்க்கப்படவில்லை",
                             fontSize = 10.5.sp,
                             color = Color(0xFF64748B)
                         )
+                    }
+
+                    if (card.photoUri != null) {
+                        OutlinedButton(
+                            onClick = {
+                                try {
+                                    pendingCropUri = Uri.parse(card.photoUri)
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                }
+                            }
+                        ) {
+                            Icon(Icons.Default.Crop, contentDescription = null, tint = UnionRed, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("செதுக்கு", fontSize = 10.5.sp, color = UnionRed, fontWeight = FontWeight.Bold)
+                        }
                     }
                 }
 
@@ -154,8 +182,8 @@ fun PhotoSourceSelectionDialog(
                     icon = Icons.Default.CameraAlt,
                     iconBg = Color(0xFFFFE4E6),
                     iconColor = UnionRed,
-                    title = "கேமரா மூலம் படம் எடுக்க (Live Camera)",
-                    desc = "கேமரா திரையைத் திறந்து முகம் படம் எடுத்தல்",
+                    title = "நேரடி கேமரா - பாஸ்போர்ட் போட்டோ (Live Camera)",
+                    desc = "உறுப்பினரை நேரில் வைத்து பாஸ்போர்ட் புகைப்படம் எடுக்க",
                     onClick = {
                         onDismiss()
                         onOpenCamera()
@@ -164,7 +192,21 @@ fun PhotoSourceSelectionDialog(
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                // Option 2: Gallery Picker
+                // Option 2: Document / Application Form Cropper
+                PhotoOptionButton(
+                    icon = Icons.Default.Description,
+                    iconBg = Color(0xFFDCFCE7),
+                    iconColor = UnionGreen,
+                    title = "விண்ணப்ப படிவம் / ஆவணத்திலிருந்து போட்டோ (From Form)",
+                    desc = "முழு படிவ தாள் வராமல் பாஸ்போர்ட் படத்தை மட்டும் செதுக்க",
+                    onClick = {
+                        galleryPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                    }
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Option 3: Gallery Picker
                 PhotoOptionButton(
                     icon = Icons.Default.PhotoLibrary,
                     iconBg = Color(0xFFEFF6FF),
@@ -240,12 +282,23 @@ private fun PhotoOptionButton(
                     .background(iconBg),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(imageVector = icon, contentDescription = null, tint = iconColor, modifier = Modifier.size(20.dp))
+                Icon(icon, contentDescription = null, tint = iconColor, modifier = Modifier.size(20.dp))
             }
+
             Spacer(modifier = Modifier.width(12.dp))
-            Column {
-                Text(text = title, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1E293B))
-                Text(text = desc, fontSize = 10.sp, color = Color(0xFF64748B))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF1E293B)
+                )
+                Text(
+                    text = desc,
+                    fontSize = 10.sp,
+                    color = Color(0xFF64748B)
+                )
             }
         }
     }

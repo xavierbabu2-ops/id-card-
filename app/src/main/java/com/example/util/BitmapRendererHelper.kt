@@ -92,13 +92,20 @@ object BitmapRendererHelper {
             e.printStackTrace()
         }
 
-        // Header Typography
+        // Header Typography with natural Tamil font
+        val tamilTypeface = try {
+            androidx.core.content.res.ResourcesCompat.getFont(context, R.font.noto_sans_tamil)
+        } catch (e: Exception) {
+            null
+        }
+
         val titlePaint1 = Paint().apply {
             color = Color.WHITE
             textSize = 34f
             isFakeBoldText = true
             textAlign = Paint.Align.CENTER
             isAntiAlias = true
+            if (tamilTypeface != null) typeface = tamilTypeface
         }
         canvas.drawText("தமிழ்நாடு பெயிண்டர்கள் மற்றும் ஓவியர்கள்", width / 2f, 52f, titlePaint1)
 
@@ -108,6 +115,7 @@ object BitmapRendererHelper {
             isFakeBoldText = true
             textAlign = Paint.Align.CENTER
             isAntiAlias = true
+            if (tamilTypeface != null) typeface = tamilTypeface
         }
         canvas.drawText("முன்னேற்ற சங்கம்", width / 2f, 96f, titlePaint2)
 
@@ -117,6 +125,7 @@ object BitmapRendererHelper {
             isFakeBoldText = true
             textAlign = Paint.Align.CENTER
             isAntiAlias = true
+            if (tamilTypeface != null) typeface = tamilTypeface
         }
         canvas.drawText("அரசு பதிவு எண்  TNMDUJCLMDUTU-50-26-00044", width / 2f, 134f, subPaint)
 
@@ -126,6 +135,7 @@ object BitmapRendererHelper {
             isFakeBoldText = true
             textAlign = Paint.Align.CENTER
             isAntiAlias = true
+            if (tamilTypeface != null) typeface = tamilTypeface
         }
         canvas.drawText("1/14 அம்பலக்காரன் பட்டி உத்தங்குடி மதுரை 625107", width / 2f, 172f, addrPaint)
 
@@ -135,12 +145,14 @@ object BitmapRendererHelper {
             textSize = 36f
             isFakeBoldText = true
             isAntiAlias = true
+            if (tamilTypeface != null) typeface = tamilTypeface
         }
         val valuePaint = Paint().apply {
             color = Color.parseColor("#111827")
             textSize = 36f
             isFakeBoldText = true
             isAntiAlias = true
+            if (tamilTypeface != null) typeface = tamilTypeface
         }
 
         val labelX = 50f
@@ -269,6 +281,7 @@ object BitmapRendererHelper {
                 isFakeBoldText = true
                 textAlign = Paint.Align.CENTER
                 isAntiAlias = true
+                if (tamilTypeface != null) typeface = tamilTypeface
             }
             val rightCenterX = 990f
             canvas.drawText("தமிழ்நாடு அரசு அனுமதி", rightCenterX, headerHeight + 45f, rightTextPaint)
@@ -352,6 +365,7 @@ object BitmapRendererHelper {
                 textSize = 26f
                 isFakeBoldText = true
                 isAntiAlias = true
+                if (tamilTypeface != null) typeface = tamilTypeface
             }
             canvas.drawText("உழைப்போம்.......", 60f, (height - 20).toFloat(), mottoPaint)
 

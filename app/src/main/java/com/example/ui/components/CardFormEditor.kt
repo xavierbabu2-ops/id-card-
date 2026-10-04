@@ -32,7 +32,9 @@ import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Crop
 import androidx.compose.material.icons.filled.Delete
+import com.example.ui.dialogs.PhotoCropAdjustDialog
 import androidx.compose.material.icons.filled.DocumentScanner
 import androidx.compose.material.icons.filled.FormatPaint
 import androidx.compose.material.icons.filled.HourglassTop
@@ -124,12 +126,26 @@ fun CardFormEditor(
     onOpenSettings: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
+    var pendingCropUri by remember { mutableStateOf<Uri?>(null) }
+
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri: Uri? ->
         if (uri != null) {
-            onCardChange(card.copy(photoUri = uri.toString()))
+            pendingCropUri = uri
         }
+    }
+
+    if (pendingCropUri != null) {
+        PhotoCropAdjustDialog(
+            sourceUri = pendingCropUri!!,
+            photoAspectRatio = "3:4",
+            onCropConfirmed = { croppedUri ->
+                onCardChange(card.copy(photoUri = croppedUri))
+                pendingCropUri = null
+            },
+            onDismiss = { pendingCropUri = null }
+        )
     }
 
     val sealPickerLauncher = rememberLauncherForActivityResult(
@@ -420,13 +436,33 @@ fun CardFormEditor(
 
                     if (card.photoUri != null) {
                         Spacer(modifier = Modifier.height(4.dp))
-                        OutlinedButton(
-                            onClick = { onCardChange(card.copy(photoUri = null)) },
-                            modifier = Modifier.fillMaxWidth()
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
-                            Icon(imageVector = Icons.Default.Delete, contentDescription = null, tint = Color.Red, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("படத்தை நீக்குக (Remove Photo)", fontSize = 11.sp, color = Color.Red)
+                            OutlinedButton(
+                                onClick = {
+                                    try {
+                                        pendingCropUri = Uri.parse(card.photoUri)
+                                    } catch (e: Exception) {
+                                        e.printStackTrace()
+                                    }
+                                },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(imageVector = Icons.Default.Crop, contentDescription = null, tint = UnionRed, modifier = Modifier.size(15.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("செதுக்கு (Crop)", fontSize = 10.5.sp, color = UnionRed, fontWeight = FontWeight.Bold)
+                            }
+
+                            OutlinedButton(
+                                onClick = { onCardChange(card.copy(photoUri = null)) },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(imageVector = Icons.Default.Delete, contentDescription = null, tint = Color.Red, modifier = Modifier.size(15.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("நீக்கு (Remove)", fontSize = 10.5.sp, color = Color.Red)
+                            }
                         }
                     }
                 }

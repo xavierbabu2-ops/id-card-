@@ -1,8 +1,12 @@
 package com.example.ui.dialogs
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.net.Uri
 import android.widget.Toast
+import com.example.util.PassportPhotoCropper
+import java.io.File
+import java.io.FileOutputStream
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -35,6 +39,7 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ContentPaste
+import androidx.compose.material.icons.filled.Crop
 import androidx.compose.material.icons.filled.DocumentScanner
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Language
@@ -90,6 +95,9 @@ import com.example.util.TamilAadhaarTransliterationHelper
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.AsyncImage
+
 data class AadhaarExtractedData(
     val name: String = "",
     val fatherName: String = "",
@@ -99,7 +107,8 @@ data class AadhaarExtractedData(
     val address: String = "",
     val district: String = "மதுரை",
     val aadhaarNumber: String = "",
-    val memberId: String = ""
+    val memberId: String = "",
+    val extractedPhotoUri: String? = null
 )
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
@@ -122,6 +131,19 @@ fun AadhaarScannerDialog(
     var isTamilMode by remember { mutableStateOf(initialTamilMode) }
     var districtSearchQuery by remember { mutableStateOf("") }
     var districtDropdownExpanded by remember { mutableStateOf(false) }
+    var pendingPhotoCropUri by remember { mutableStateOf<Uri?>(null) }
+
+    if (pendingPhotoCropUri != null) {
+        PhotoCropAdjustDialog(
+            sourceUri = pendingPhotoCropUri!!,
+            photoAspectRatio = "3:4",
+            onCropConfirmed = { croppedUri ->
+                extractedData = extractedData?.copy(extractedPhotoUri = croppedUri)
+                pendingPhotoCropUri = null
+            },
+            onDismiss = { pendingPhotoCropUri = null }
+        )
+    }
 
     fun mapToExtractedData(parsed: com.example.util.AadhaarOcrResult, inTamil: Boolean): AadhaarExtractedData {
         val finalName = if (inTamil) TamilAadhaarTransliterationHelper.transliterateNameToTamil(parsed.name) else parsed.name
@@ -154,12 +176,34 @@ fun AadhaarScannerDialog(
             isScanning = true
             scope.launch {
                 val ocrText = AadhaarOcrEngine.recognizeTextFromBitmap(bitmap)
+                // Extract passport photo from this document/card if present
+                val faceBitmap = PassportPhotoCropper.detectAndCropFace(bitmap, "3:4")
+                val faceUri = if (faceBitmap != null) {
+                    val file = File(context.cacheDir, "aadhaar_face_${System.currentTimeMillis()}.jpg")
+                    val out = FileOutputStream(file)
+                    faceBitmap.compress(Bitmap.CompressFormat.JPEG, 95, out)
+                    out.flush()
+                    out.close()
+                    Uri.fromFile(file)
+                } else null
+
                 if (ocrText.isNotBlank()) {
                     manualAadhaarText = ocrText
                     val parsed = AadhaarOcrParser.parseAadhaarText(ocrText, currentCard.cardType)
-                    val data = mapToExtractedData(parsed, isTamilMode)
+                    val data = mapToExtractedData(parsed, isTamilMode).copy(
+                        extractedPhotoUri = faceUri?.toString()
+                    )
                     extractedData = data
-                    Toast.makeText(context, "ஆதார் விவரங்கள் பெறப்பட்டது! புதிய எண்: ${data.memberId}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, if (faceUri != null) "விவரங்கள் & புகைப்படம் வெற்றிகரமாக பெறப்பட்டது!" else "ஆதார் விவரங்கள் பெறப்பட்டது! புதிய எண்: ${data.memberId}", Toast.LENGTH_SHORT).show()
+                } else if (faceUri != null) {
+                    val data = AadhaarExtractedData(
+                        name = currentCard.name.ifBlank { "உறுப்பினர்" },
+                        district = currentCard.district,
+                        memberId = DistrictCodeHelper.generateDistrictMemberId(currentCard.district, currentCard.cardType, 1),
+                        extractedPhotoUri = faceUri.toString()
+                    )
+                    extractedData = data
+                    Toast.makeText(context, "விண்ணப்பத்திலிருந்து புகைப்படம் மட்டும் வெற்றிகரமாக பிரித்தெடுக்கப்பட்டது!", Toast.LENGTH_SHORT).show()
                 } else {
                     Toast.makeText(context, "படத்தில் எழுத்துக்கள் தெளிவாக இல்லை. மீண்டும் படம் எடுக்கவும் அல்லது கீழே மாதிரி மாவட்டத்தைத் தேர்ந்தெடுக்கவும்.", Toast.LENGTH_LONG).show()
                 }
@@ -177,12 +221,25 @@ fun AadhaarScannerDialog(
             isScanning = true
             scope.launch {
                 val ocrText = AadhaarOcrEngine.recognizeTextFromUri(context, uri)
+                val faceUri = PassportPhotoCropper.extractFaceFromDocument(context, uri)
+
                 if (ocrText.isNotBlank()) {
                     manualAadhaarText = ocrText
                     val parsed = AadhaarOcrParser.parseAadhaarText(ocrText, currentCard.cardType)
-                    val data = mapToExtractedData(parsed, isTamilMode)
+                    val data = mapToExtractedData(parsed, isTamilMode).copy(
+                        extractedPhotoUri = faceUri?.toString()
+                    )
                     extractedData = data
-                    Toast.makeText(context, "ஆதார் விவரங்கள் பெறப்பட்டது! புதிய எண்: ${data.memberId}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, if (faceUri != null) "விவரங்கள் & புகைப்படம் வெற்றிகரமாக பெறப்பட்டது!" else "ஆதார் விவரங்கள் பெறப்பட்டது! புதிய எண்: ${data.memberId}", Toast.LENGTH_SHORT).show()
+                } else if (faceUri != null) {
+                    val data = AadhaarExtractedData(
+                        name = currentCard.name.ifBlank { "உறுப்பினர்" },
+                        district = currentCard.district,
+                        memberId = DistrictCodeHelper.generateDistrictMemberId(currentCard.district, currentCard.cardType, 1),
+                        extractedPhotoUri = faceUri.toString()
+                    )
+                    extractedData = data
+                    Toast.makeText(context, "விண்ணப்பத்திலிருந்து புகைப்படம் மட்டும் வெற்றிகரமாக பிரித்தெடுக்கப்பட்டது!", Toast.LENGTH_SHORT).show()
                 } else {
                     Toast.makeText(context, "படத்தில் எழுத்துக்கள் தெளிவாக இல்லை. மீண்டும் படம் தேர்வு செய்யவும்.", Toast.LENGTH_LONG).show()
                 }
@@ -633,6 +690,68 @@ fun AadhaarScannerDialog(
                                     )
                                 }
 
+                                if (data.extractedPhotoUri != null) {
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(Color.White)
+                                            .border(1.dp, Color(0xFFA7F3D0), RoundedCornerShape(8.dp))
+                                            .padding(8.dp)
+                                    ) {
+                                        AsyncImage(
+                                            model = data.extractedPhotoUri,
+                                            contentDescription = "Extracted Member Photo",
+                                            contentScale = ContentScale.Crop,
+                                            modifier = Modifier
+                                                .size(46.dp, 60.dp)
+                                                .clip(RoundedCornerShape(6.dp))
+                                                .border(1.dp, UnionRed, RoundedCornerShape(6.dp))
+                                        )
+                                        Spacer(modifier = Modifier.width(10.dp))
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = "புகைப்படம் வெற்றிகரமாக செதுக்கப்பட்டது!",
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 11.5.sp,
+                                                color = UnionGreen
+                                            )
+                                            Text(
+                                                text = "பாஸ்போர்ட் போட்டோ மட்டும் தனியாக பிரித்தெடுக்கப்பட்டது",
+                                                fontSize = 9.5.sp,
+                                                color = Color(0xFF64748B)
+                                            )
+                                        }
+
+                                        OutlinedButton(
+                                            onClick = {
+                                                try {
+                                                    pendingPhotoCropUri = Uri.parse(data.extractedPhotoUri)
+                                                } catch (e: Exception) {
+                                                    e.printStackTrace()
+                                                }
+                                            }
+                                        ) {
+                                            Icon(Icons.Default.Crop, contentDescription = null, tint = UnionRed, modifier = Modifier.size(14.dp))
+                                            Spacer(modifier = Modifier.width(3.dp))
+                                            Text("சரிசெய்", fontSize = 10.sp, color = UnionRed, fontWeight = FontWeight.Bold)
+                                        }
+                                    }
+                                } else if (scannedImageUri != null) {
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Button(
+                                        onClick = { pendingPhotoCropUri = scannedImageUri },
+                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEFF6FF), contentColor = UnionNavy),
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Icon(Icons.Default.Crop, contentDescription = null, tint = UnionNavy, modifier = Modifier.size(16.dp))
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text("ஆவணத்திலிருந்து போட்டோவை மட்டும் செதுக்குக", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                    }
+                                }
+
                                 Spacer(modifier = Modifier.height(8.dp))
 
                                 OutlinedTextField(
@@ -746,10 +865,11 @@ fun AadhaarScannerDialog(
                                     age = data.age,
                                     district = data.district,
                                     address = data.address,
-                                    aadhaarNumber = data.aadhaarNumber
+                                    aadhaarNumber = data.aadhaarNumber,
+                                    photoUri = data.extractedPhotoUri ?: currentCard.photoUri
                                 )
                                 onAadhaarDataExtracted(updated)
-                                Toast.makeText(context, "ஆதார் விவரங்கள் & எண் ${data.memberId} படிவத்தில் தானாக நிரப்பப்பட்டது!", Toast.LENGTH_LONG).show()
+                                Toast.makeText(context, if (data.extractedPhotoUri != null) "ஆதார் விவரங்கள் & புகைப்படம் படிவத்தில் தானாக நிரப்பப்பட்டது!" else "ஆதார் விவரங்கள் & எண் ${data.memberId} படிவத்தில் தானாக நிரப்பப்பட்டது!", Toast.LENGTH_LONG).show()
                                 onDismiss()
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = UnionGreen),

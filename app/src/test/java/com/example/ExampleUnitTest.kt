@@ -2,10 +2,16 @@ package com.example
 
 import com.example.data.MemberCardEntity
 import com.example.util.DistrictCodeHelper
+import com.example.util.PassportPhotoCropper
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [34])
 class ExampleUnitTest {
 
     @Test
@@ -71,5 +77,22 @@ class ExampleUnitTest {
         assertEquals("கோயம்புத்தூர்", DistrictCodeHelper.detectDistrictFromText("Pollachi, 641001"))
         assertEquals("கன்னியாகுமரி", DistrictCodeHelper.detectDistrictFromText("Nagercoil, 629001"))
         assertEquals("நீலகிரி", DistrictCodeHelper.detectDistrictFromText("Coonoor, 643001"))
+    }
+
+    @Test
+    fun testPhotoCropPresets() {
+        val testBitmap = android.graphics.Bitmap.createBitmap(1000, 1400, android.graphics.Bitmap.Config.ARGB_8888)
+        
+        val formCrop = PassportPhotoCropper.cropPresetRegion(testBitmap, PassportPhotoCropper.CropPreset.FORM_TOP_RIGHT, "3:4")
+        assertTrue(formCrop.width > 0 && formCrop.height > 0)
+        assertEquals(3f / 4f, formCrop.width.toFloat() / formCrop.height.toFloat(), 0.05f)
+
+        val aadhaarCrop = PassportPhotoCropper.cropPresetRegion(testBitmap, PassportPhotoCropper.CropPreset.AADHAAR_LEFT, "3:4")
+        assertTrue(aadhaarCrop.width > 0 && aadhaarCrop.height > 0)
+        assertEquals(3f / 4f, aadhaarCrop.width.toFloat() / aadhaarCrop.height.toFloat(), 0.05f)
+
+        testBitmap.recycle()
+        formCrop.recycle()
+        aadhaarCrop.recycle()
     }
 }
