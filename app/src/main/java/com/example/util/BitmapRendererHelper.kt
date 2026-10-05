@@ -99,35 +99,40 @@ object BitmapRendererHelper {
             null
         }
 
-        val titlePaint1 = Paint().apply {
+        // Header Typography with natural Tamil font (Pure Crisp White Text)
+        val titleFillPaint1 = Paint().apply {
             color = Color.WHITE
-            textSize = 34f
+            textSize = 35f
             isFakeBoldText = true
             textAlign = Paint.Align.CENTER
             isAntiAlias = true
+            style = Paint.Style.FILL
             if (tamilTypeface != null) typeface = tamilTypeface
         }
-        canvas.drawText("தமிழ்நாடு பெயிண்டர்கள் மற்றும் ஓவியர்கள்", width / 2f, 52f, titlePaint1)
+        canvas.drawText("தமிழ்நாடு பெயிண்டர்கள் ஓவியர்கள்", width / 2f, 52f, titleFillPaint1)
 
-        val titlePaint2 = Paint().apply {
-            color = Color.parseColor("#FFEB3B")
-            textSize = 39f
-            isFakeBoldText = true
-            textAlign = Paint.Align.CENTER
-            isAntiAlias = true
-            if (tamilTypeface != null) typeface = tamilTypeface
-        }
-        canvas.drawText("முன்னேற்ற சங்கம்", width / 2f, 96f, titlePaint2)
-
-        val subPaint = Paint().apply {
+        val titleFillPaint2 = Paint().apply {
             color = Color.WHITE
-            textSize = 22f
+            textSize = 40f
             isFakeBoldText = true
             textAlign = Paint.Align.CENTER
             isAntiAlias = true
+            style = Paint.Style.FILL
             if (tamilTypeface != null) typeface = tamilTypeface
         }
-        canvas.drawText("அரசு பதிவு எண் : TNMDUJCLMDUTU-50-26-00044", width / 2f, 134f, subPaint)
+        canvas.drawText("முன்னேற்ற சங்கம்", width / 2f, 96f, titleFillPaint2)
+
+        // Clear prominent Government Registration Number
+        val subFillPaint = Paint().apply {
+            color = Color.WHITE
+            textSize = 23f
+            isFakeBoldText = true
+            textAlign = Paint.Align.CENTER
+            isAntiAlias = true
+            style = Paint.Style.FILL
+            if (tamilTypeface != null) typeface = tamilTypeface
+        }
+        canvas.drawText("அரசு பதிவு எண் : TNMDUJCLMDUTU-50-26-00044", width / 2f, 134f, subFillPaint)
 
         val addrPaint = Paint().apply {
             color = Color.WHITE

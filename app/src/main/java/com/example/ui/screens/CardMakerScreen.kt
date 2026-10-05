@@ -394,13 +394,39 @@ fun CardMakerScreen(
                                 Icon(Icons.Default.History, contentDescription = "History")
                             }
                         },
-                        label = { Text("வரலாறு", fontSize = 9.sp, fontWeight = FontWeight.Bold) },
+                        label = { Text("வரலாறு", fontSize = 8.5.sp, fontWeight = FontWeight.Bold) },
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = UnionRed,
                             selectedTextColor = UnionRed,
                             indicatorColor = Color(0xFFFFE4E6)
                         ),
                         modifier = Modifier.testTag("tab_history")
+                    )
+
+                    NavigationBarItem(
+                        selected = currentTab == AppNavTab.SUPER_ADMIN,
+                        onClick = { viewModel.setTab(AppNavTab.SUPER_ADMIN) },
+                        icon = {
+                            BadgedBox(badge = {
+                                if (pendingCount > 0) {
+                                    Badge(
+                                        containerColor = Color(0xFFFFD700),
+                                        contentColor = Color.Black
+                                    ) {
+                                        Text("$pendingCount", fontSize = 8.sp, fontWeight = FontWeight.Black)
+                                    }
+                                }
+                            }) {
+                                Icon(Icons.Default.AdminPanelSettings, contentDescription = "Super Admin")
+                            }
+                        },
+                        label = { Text("அட்மின்", fontSize = 8.5.sp, fontWeight = FontWeight.Bold) },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = UnionRed,
+                            selectedTextColor = UnionRed,
+                            indicatorColor = Color(0xFFFFE4E6)
+                        ),
+                        modifier = Modifier.testTag("tab_super_admin")
                     )
                 }
             }
@@ -611,6 +637,7 @@ fun CardMakerScreen(
                         cards = allCards,
                         onApproveCard = { viewModel.approveCard(it) },
                         onRejectCard = { card, reason -> viewModel.rejectCard(card, reason) },
+                        onApproveAll = { viewModel.approveAllPendingCards() },
                         onBack = { viewModel.setTab(AppNavTab.EDITOR) }
                     )
                 }

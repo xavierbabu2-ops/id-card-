@@ -79,30 +79,34 @@ fun ContractorCardView(
 
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
                         modifier = Modifier
                             .weight(1f)
                             .padding(horizontal = 4.dp)
                     ) {
                         Text(
-                            text = "தமிழ்நாடு பெயிண்டர்கள் மற்றும் ஓவியர்கள்",
+                            text = "தமிழ்நாடு பெயிண்டர்கள் ஓவியர்கள்",
                             color = Color.White,
                             fontSize = 11.2.sp,
                             fontWeight = FontWeight.Black,
-                            textAlign = TextAlign.Center
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
                         )
                         Text(
                             text = "முன்னேற்ற சங்கம்",
-                            color = Color(0xFFFFEB3B),
+                            color = Color.White,
                             fontSize = 12.5.sp,
                             fontWeight = FontWeight.Black,
-                            textAlign = TextAlign.Center
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
                         )
                         Text(
                             text = "அங்கீகரிக்கப்பட்ட பெயிண்டிங் ஒப்பந்ததாரர் அட்டை",
                             color = Color.White,
                             fontSize = 8.5.sp,
                             fontWeight = FontWeight.ExtraBold,
-                            textAlign = TextAlign.Center
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
                         )
                     }
 

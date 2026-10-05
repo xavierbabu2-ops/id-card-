@@ -333,13 +333,34 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 approvedBy = "Super Admin",
                 memberCard = card
             )
-            if (_currentCard.value.id == card.id) {
+            if (_currentCard.value.id == card.id || _currentCard.value.memberId == card.memberId) {
                 _currentCard.value = _currentCard.value.copy(
                     approvalStatus = "APPROVED",
                     approvedBy = "Super Admin"
                 )
             }
             _snackbarMessage.value = "${card.name} அவர்களின் அட்டை அங்கீகரிக்கப்பட்டது! வரலாறு புதுப்பிக்கப்பட்டது. ✅"
+        }
+    }
+
+    fun approveAllPendingCards() {
+        viewModelScope.launch {
+            val pendingList = allCards.value.filter { it.approvalStatus == "PENDING" }
+            for (card in pendingList) {
+                repository.updateApproval(
+                    id = card.id,
+                    status = "APPROVED",
+                    approvedBy = "Super Admin",
+                    memberCard = card
+                )
+            }
+            if (_currentCard.value.approvalStatus == "PENDING") {
+                _currentCard.value = _currentCard.value.copy(
+                    approvalStatus = "APPROVED",
+                    approvedBy = "Super Admin"
+                )
+            }
+            _snackbarMessage.value = "${pendingList.size} நிலுவை அட்டைகளும் சூப்பர் அட்மின் மூலம் அங்கீகரிக்கப்பட்டன! ✅"
         }
     }
 

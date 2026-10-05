@@ -28,11 +28,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -82,7 +84,7 @@ fun ProfessionalMemberIdCardLayout(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .fillMaxHeight(0.24f)
+                    .fillMaxHeight(0.25f)
                     .background(OFFICIAL_CARD_RED)
                     .padding(horizontal = 6.dp, vertical = 2.dp)
             ) {
@@ -94,7 +96,7 @@ fun ProfessionalMemberIdCardLayout(
                     // Left Official TNPA² Round Logo
                     Box(
                         modifier = Modifier
-                            .size(44.dp)
+                            .size(38.dp)
                             .clip(CircleShape)
                             .background(Color.White)
                             .padding(1.dp)
@@ -124,49 +126,55 @@ fun ProfessionalMemberIdCardLayout(
                         verticalArrangement = Arrangement.Center,
                         modifier = Modifier
                             .weight(1f)
+                            .fillMaxHeight()
                             .padding(horizontal = 2.dp)
                     ) {
                         Text(
-                            text = "தமிழ்நாடு பெயிண்டர்கள் மற்றும் ஓவியர்கள்",
+                            text = "தமிழ்நாடு பெயிண்டர்கள் ஓவியர்கள்",
                             color = Color.White,
-                            fontSize = 11.2.sp,
-                            fontWeight = FontWeight.Black,
-                            textAlign = TextAlign.Center,
-                            lineHeight = 12.8.sp,
-                            maxLines = 1
-                        )
-                        Text(
-                            text = "முன்னேற்ற சங்கம்",
-                            color = Color(0xFFFFEB3B),
                             fontSize = 12.2.sp,
                             fontWeight = FontWeight.Black,
                             textAlign = TextAlign.Center,
-                            lineHeight = 13.8.sp,
-                            maxLines = 1
+                            lineHeight = 13.5.sp,
+                            maxLines = 1,
+                            modifier = Modifier.fillMaxWidth()
                         )
-                        Spacer(modifier = Modifier.height(1.dp))
+                        Text(
+                            text = "முன்னேற்ற சங்கம்",
+                            color = Color.White,
+                            fontSize = 13.5.sp,
+                            fontWeight = FontWeight.Black,
+                            textAlign = TextAlign.Center,
+                            lineHeight = 14.5.sp,
+                            maxLines = 1,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(modifier = Modifier.height(1.5.dp))
                         Text(
                             text = "அரசு பதிவு எண் : TNMDUJCLMDUTU-50-26-00044",
                             color = Color.White,
-                            fontSize = 7.sp,
-                            fontWeight = FontWeight.Black,
+                            fontSize = 7.8.sp,
+                            fontWeight = FontWeight.Bold,
                             textAlign = TextAlign.Center,
-                            maxLines = 1
+                            maxLines = 1,
+                            modifier = Modifier.fillMaxWidth()
                         )
+                        Spacer(modifier = Modifier.height(0.5.dp))
                         Text(
                             text = "1/14 அம்பலக்காரன் பட்டி, ஒத்தங்குடி, மதுரை - 625107",
-                            color = Color.White,
-                            fontSize = 7.sp,
-                            fontWeight = FontWeight.ExtraBold,
+                            color = Color.White.copy(alpha = 0.95f),
+                            fontSize = 6.8.sp,
+                            fontWeight = FontWeight.Medium,
                             textAlign = TextAlign.Center,
-                            maxLines = 1
+                            maxLines = 1,
+                            modifier = Modifier.fillMaxWidth()
                         )
                     }
 
                     // Right Official TNPA² Round Logo
                     Box(
                         modifier = Modifier
-                            .size(44.dp)
+                            .size(38.dp)
                             .clip(CircleShape)
                             .background(Color.White)
                             .padding(1.dp)
@@ -538,3 +546,4 @@ private fun SignatureBlock(
         )
     }
 }
+

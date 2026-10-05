@@ -108,20 +108,38 @@ fun ExecutiveCardView(
                         }
                     }
 
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(horizontal = 4.dp)
+                    ) {
                         Text(
-                            text = "தமிழ்நாடு பெயிண்டர்கள் மற்றும் ஓவியர்கள்",
+                            text = "தமிழ்நாடு பெயிண்டர்கள் ஓவியர்கள்",
                             color = Color.White,
                             fontSize = 11.5.sp,
                             fontWeight = FontWeight.Black,
-                            textAlign = TextAlign.Center
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
                         )
                         Text(
                             text = "முன்னேற்ற சங்கம்",
-                            color = Color(0xFFFFEB3B),
-                            fontSize = 13.5.sp,
+                            color = Color.White,
+                            fontSize = 12.8.sp,
                             fontWeight = FontWeight.Black,
-                            textAlign = TextAlign.Center
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(modifier = Modifier.height(1.dp))
+                        Text(
+                            text = "அரசு பதிவு எண் : TNMDUJCLMDUTU-50-26-00044",
+                            color = Color.White,
+                            fontSize = 7.2.sp,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center,
+                            maxLines = 1,
+                            modifier = Modifier.fillMaxWidth()
                         )
                     }
 

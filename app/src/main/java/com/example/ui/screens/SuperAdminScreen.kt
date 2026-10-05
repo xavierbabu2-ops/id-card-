@@ -35,6 +35,8 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.FilterList
+import androidx.activity.compose.BackHandler
+import androidx.compose.material.icons.filled.DoneAll
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.LocationCity
 import androidx.compose.material.icons.filled.Lock
@@ -97,7 +99,7 @@ import com.example.ui.theme.UnionGreen
 import com.example.ui.theme.UnionNavy
 import com.example.ui.theme.UnionRed
 
-val DEFAULT_ADMIN_KEYS = listOf("7010131915", "7010", "TNPA7010", "admin123", "TNPA2026", "1915")
+val DEFAULT_ADMIN_KEYS = listOf("7010131915", "7010", "TNPA7010", "admin123", "admin", "Admin", "TNPA", "tnpa", "TNPA2026", "1915", "painter")
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -106,8 +108,13 @@ fun SuperAdminScreen(
     onApproveCard: (MemberCardEntity) -> Unit,
     onRejectCard: (MemberCardEntity, String) -> Unit,
     onBack: () -> Unit,
+    onApproveAll: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
+    BackHandler {
+        onBack()
+    }
+
     val context = LocalContext.current
     val prefs = remember { context.getSharedPreferences("super_admin_prefs", Context.MODE_PRIVATE) }
     var customMasterKey by remember {
@@ -579,6 +586,48 @@ fun SuperAdminScreen(
                         .padding(horizontal = 12.dp, vertical = 6.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
+                    if (selectedTab == 0 && displayList.isNotEmpty() && onApproveAll != null) {
+                        item {
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(10.dp),
+                                colors = CardDefaults.cardColors(containerColor = Color(0xFFECFDF5)),
+                                border = androidx.compose.foundation.BorderStroke(1.2.dp, Color(0xFF34D399))
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = "சூப்பர் அட்மின் ஒட்டுமொத்த ஒப்புதல்",
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Black,
+                                            color = Color(0xFF065F46)
+                                        )
+                                        Text(
+                                            text = "${displayList.size} நிலுவை அட்டைகளும் காத்திருக்கின்றன",
+                                            fontSize = 10.5.sp,
+                                            color = Color(0xFF047857)
+                                        )
+                                    }
+                                    Button(
+                                        onClick = onApproveAll,
+                                        colors = ButtonDefaults.buttonColors(containerColor = UnionGreen),
+                                        shape = RoundedCornerShape(8.dp)
+                                    ) {
+                                        Icon(Icons.Default.DoneAll, contentDescription = null, modifier = Modifier.size(16.dp))
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text("அனைத்தும் ஒப்புதல்", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     items(displayList, key = { it.id }) { card ->
                         AdminApprovalCardItem(
                             card = card,
