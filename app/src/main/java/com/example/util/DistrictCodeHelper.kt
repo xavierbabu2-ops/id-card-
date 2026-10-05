@@ -65,7 +65,7 @@ object DistrictCodeHelper {
      * Starting Member ID strictly begins from 0001 for each district
      */
     val ALL_38_DISTRICT_DETAILS: List<DistrictDetail> = listOf(
-        DistrictDetail("மதுரை", "Madurai", "MDU", "TN-MDU-0001", "1/14, அம்பலக்காரன் பட்டி, ஒத்தங்குடி, மதுரை", "625001", "மு. கார்த்திகேயன்", "முத்துசாமி"),
+        DistrictDetail("மதுரை", "Madurai", "MDU", "TN-MDU-0001", "1/14 அம்பலக்காரன்பட்டி, உத்தங்குடி போஸ்ட் அவுட் மதுரை 625107", "625107", "மு. கார்த்திகேயன்", "முத்துசாமி"),
         DistrictDetail("சென்னை", "Chennai", "CHN", "TN-CHN-0001", "8, பாரதி தெரு, அண்ணா நகர், சென்னை", "600001", "க. மாரிமுத்து", "கந்தசாமி"),
         DistrictDetail("கோயம்புத்தூர்", "Coimbatore", "CBE", "TN-CBE-0001", "12, காமராஜர் சாலை, பீளமேடு, கோயம்புத்தூர்", "641001", "வே. சுப்பிரமணி", "வேலுச்சாமி"),
         DistrictDetail("திருச்சிராப்பள்ளி", "Tiruchirappalli", "TRY", "TN-TRY-0001", "24, காவேரி தெரு, ஸ்ரீரங்கம், திருச்சி", "620001", "ஆர். சக்திவேல்", "ராமையா"),

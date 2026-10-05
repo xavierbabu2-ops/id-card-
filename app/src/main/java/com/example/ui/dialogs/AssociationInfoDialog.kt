@@ -191,7 +191,7 @@ fun AssociationInfoDialog(
                         Icon(Icons.Default.LocationOn, contentDescription = null, tint = UnionRed, modifier = Modifier.size(20.dp))
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "தலைமை அலுவலகம்: 1/14 அம்பலக்காரன் பட்டி, ஒத்தங்குடி, மதுரை - 625107",
+                            text = "தலைமை அலுவலகம்: 1/14 அம்பலக்காரன்பட்டி, உத்தங்குடி போஸ்ட் அவுட் மதுரை 625107",
                             fontSize = 11.5.sp,
                             color = Color(0xFF334155),
                             fontWeight = FontWeight.Medium

@@ -161,9 +161,9 @@ fun ProfessionalMemberIdCardLayout(
                         )
                         Spacer(modifier = Modifier.height(0.5.dp))
                         Text(
-                            text = "1/14 அம்பலக்காரன் பட்டி, ஒத்தங்குடி, மதுரை - 625107",
+                            text = "1/14 அம்பலக்காரன்பட்டி, உத்தங்குடி போஸ்ட் அவுட் மதுரை 625107",
                             color = Color.White.copy(alpha = 0.95f),
-                            fontSize = 6.8.sp,
+                            fontSize = 6.6.sp,
                             fontWeight = FontWeight.Medium,
                             textAlign = TextAlign.Center,
                             maxLines = 1,
@@ -336,7 +336,7 @@ fun ProfessionalMemberIdCardLayout(
                             )
                             BackDetailRow(
                                 label = "இருப்பிடம்",
-                                value = card.address.ifBlank { "1/14 அம்பலக்காரன் பட்டி, மதுரை" },
+                                value = card.address.ifBlank { "1/14 அம்பலக்காரன்பட்டி, உத்தங்குடி போஸ்ட் அவுட் மதுரை 625107" },
                                 isAddress = true
                             )
 

@@ -14,7 +14,7 @@ data class MemberCardEntity(
     val fatherName: String = "முத்துசாமி",
     val age: String = "34",
     val bloodGroup: String = "O +ve",
-    val address: String = "1/14 அம்பலக்காரன் பட்டி, ஒத்தங்குடி, மதுரை",
+    val address: String = "1/14 அம்பலக்காரன்பட்டி, உத்தங்குடி போஸ்ட் அவுட் மதுரை 625107",
     val district: String = "மதுரை",
     val phone: String = "9876543210",
     val emergencyPhone: String = "9443100000",

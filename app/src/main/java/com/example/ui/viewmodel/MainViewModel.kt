@@ -42,7 +42,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             fatherName = "முத்துசாமி",
             age = "34",
             bloodGroup = "O +ve",
-            address = "1/14 அம்பலக்காரன் பட்டி, ஒத்தங்குடி, மதுரை",
+            address = "1/14 அம்பலக்காரன்பட்டி, உத்தங்குடி போஸ்ட் அவுட் மதுரை 625107",
             district = "மதுரை",
             phone = "9876543210",
             emergencyPhone = "9443100000",

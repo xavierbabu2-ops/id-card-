@@ -178,7 +178,7 @@ object CardExporter {
             // Top Header
             canvas.drawText("தமிழ்நாடு பெயிண்டர்கள் மற்றும் ஓவியர்கள் முன்னேற்ற சங்கம்", pageWidth / 2f, 40f, headerPaint)
             canvas.drawText("Tamil Nadu Painters & Artists Welfare Association (TNPA²)", pageWidth / 2f, 55f, subHeaderPaint)
-            canvas.drawText("அரசு பதிவு எண்: TNMDUJCLMDUTU-50-26-00044 | தலைமை: மதுரை - 625107", pageWidth / 2f, 68f, regPaint)
+            canvas.drawText("அரசு பதிவு எண்: TNMDUJCLMDUTU-50-26-00044 | தலைமை: 1/14 அம்பலக்காரன்பட்டி, உத்தங்குடி போஸ்ட் அவுட் மதுரை 625107", pageWidth / 2f, 68f, regPaint)
 
             // Header Separator Line
             val linePaint = Paint().apply {

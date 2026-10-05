@@ -136,13 +136,13 @@ object BitmapRendererHelper {
 
         val addrPaint = Paint().apply {
             color = Color.WHITE
-            textSize = 22f
+            textSize = 21f
             isFakeBoldText = true
             textAlign = Paint.Align.CENTER
             isAntiAlias = true
             if (tamilTypeface != null) typeface = tamilTypeface
         }
-        canvas.drawText("1/14 அம்பலக்காரன் பட்டி, ஒத்தங்குடி, மதுரை - 625107", width / 2f, 172f, addrPaint)
+        canvas.drawText("1/14 அம்பலக்காரன்பட்டி, உத்தங்குடி போஸ்ட் அவுட் மதுரை 625107", width / 2f, 172f, addrPaint)
 
         // 2. MAIN BODY SECTION
         val labelPaint = Paint().apply {
@@ -272,7 +272,7 @@ object BitmapRendererHelper {
             curY += backLineGap
             canvas.drawText("இருப்பிடம்", labelX, curY, labelPaint)
             canvas.drawText(" : ", 340f, curY, labelPaint)
-            val address = card.address.ifBlank { "1/14 அம்பலக்காரன் பட்டி, மதுரை" }
+            val address = card.address.ifBlank { "1/14 அம்பலக்காரன்பட்டி, உத்தங்குடி போஸ்ட் அவுட் மதுரை 625107" }
             val addressLines = wrapTextIntoLines(address, maxCharsPerLine = 22, maxLines = 4)
             val addrLineHeight = 36f
             for ((idx, line) in addressLines.withIndex()) {
